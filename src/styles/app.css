@@ -510,10 +510,11 @@ td.select-col {
 .text-link {
   color: var(--primary);
   font-weight: 600;
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   font-size: 12px;
 }
-.text-link:hover { text-decoration: underline; }
+.text-link:hover { color: #1f6b4a; }
 .btn-link {
   border: 0;
   background: transparent;

@@ -180,11 +180,6 @@ export function PubTable({
                         ) : (
                           <span className="muted">—</span>
                         )}
-                        {text ? (
-                          <button type="button" className="btn tiny" onClick={(e) => onCopy(text, e)}>
-                            复制
-                          </button>
-                        ) : null}
                       </div>
                     </td>
                   )
@@ -204,12 +199,9 @@ export function PubTable({
                           >
                             {label}
                           </button>
-                          <button type="button" className="btn tiny" onClick={(e) => onCopy(text, e)}>
-                            路径
-                          </button>
                         </div>
                       ) : (
-                        <span className="muted pad">未上传</span>
+                        <span className="muted pad">—</span>
                       )}
                     </td>
                   )
