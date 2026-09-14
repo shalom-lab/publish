@@ -50,8 +50,8 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
         </header>
         <form className="form-grid" onSubmit={submit}>
           <label>
-            发表年月
-            <input value={form.date} onChange={(e) => set('date', e.target.value)} placeholder="2023/11" />
+            发表年月（A-B）
+            <input value={form.date} onChange={(e) => set('date', e.target.value)} placeholder="2023-11" />
           </label>
           <label>
             发表年份
@@ -97,13 +97,6 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             第一作者
             <input value={form.firstAuthor} onChange={(e) => set('firstAuthor', e.target.value)} />
           </label>
-          <label>
-            通讯作者
-            <input
-              value={form.correspondingAuthor}
-              onChange={(e) => set('correspondingAuthor', e.target.value)}
-            />
-          </label>
           <label className="full">
             全部作者
             <textarea
@@ -115,10 +108,33 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
           <label className="check-label">
             <input
               type="checkbox"
+              checked={form.isFirstAuthor}
+              onChange={(e) => set('isFirstAuthor', e.target.checked)}
+            />
+            是否第一作者
+          </label>
+          <label className="check-label">
+            <input
+              type="checkbox"
+              checked={form.isCorresponding}
+              onChange={(e) => set('isCorresponding', e.target.checked)}
+            />
+            是否通讯作者
+          </label>
+          <label className="check-label">
+            <input
+              type="checkbox"
               checked={form.coFirst}
               onChange={(e) => set('coFirst', e.target.checked)}
             />
             是否共一
+          </label>
+          <label>
+            通讯作者
+            <input
+              value={form.correspondingAuthor}
+              onChange={(e) => set('correspondingAuthor', e.target.value)}
+            />
           </label>
           <label>
             本人排名

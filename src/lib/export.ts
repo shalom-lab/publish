@@ -10,7 +10,9 @@ export function exportExcel(publications: Publication[], filename = 'publication
     const row: Record<string, string | number | boolean> = {}
     for (const col of COLUMNS) {
       const v = p[col.key]
-      if (col.key === 'coFirst') row[col.label] = v ? '是' : '否'
+      if (col.key === 'coFirst' || col.key === 'isFirstAuthor' || col.key === 'isCorresponding') {
+        row[col.label] = v ? '是' : '否'
+      }
       else if (v === null || v === undefined) row[col.label] = ''
       else row[col.label] = v as string | number
     }
@@ -21,6 +23,27 @@ export function exportExcel(publications: Publication[], filename = 'publication
   XLSX.utils.book_append_sheet(book, sheet, 'Publications')
   const buf = XLSX.write(book, { bookType: 'xlsx', type: 'array' })
   saveAs(new Blob([buf], { type: 'application/octet-stream' }), filename)
+}
+
+function csvEscape(value: string): string {
+  if (/[",\r\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`
+  return value
+}
+
+function cellForCsv(pub: Publication, key: (typeof COLUMNS)[number]['key']): string {
+  const v = pub[key]
+  if (key === 'coFirst' || key === 'isFirstAuthor' || key === 'isCorresponding') return v ? '是' : '否'
+  if (v === null || v === undefined) return ''
+  return String(v)
+}
+
+/** 标准 CSV：逗号分隔、必要时双引号转义，首行为表头。 */
+export function publicationsToCsv(publications: Publication[]): string {
+  const header = COLUMNS.map((c) => csvEscape(c.label)).join(',')
+  const lines = publications.map((p) =>
+    COLUMNS.map((c) => csvEscape(cellForCsv(p, c.key))).join(','),
+  )
+  return [header, ...lines].join('\r\n')
 }
 
 async function fetchPdfBlob(relativePath: string): Promise<Blob | null> {

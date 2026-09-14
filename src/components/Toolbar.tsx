@@ -9,6 +9,7 @@ interface Props {
   onOpenSettings: () => void
   onSaveRemote: () => void
   onExportExcel: () => void
+  onCopyAllCsv: () => void
   onDownloadFullPdfs: () => void
   onDownloadFirstPdfs: () => void
   onDownloadAllRis: () => void
@@ -24,6 +25,7 @@ export function Toolbar({
   onOpenSettings,
   onSaveRemote,
   onExportExcel,
+  onCopyAllCsv,
   onDownloadFullPdfs,
   onDownloadFirstPdfs,
   onDownloadAllRis,
@@ -49,6 +51,9 @@ export function Toolbar({
         </button>
       </div>
       <div className="toolbar-group">
+        <button type="button" className="btn secondary" onClick={onCopyAllCsv}>
+          复制全部 CSV
+        </button>
         <button type="button" className="btn secondary" onClick={onExportExcel}>
           下载 Excel
         </button>

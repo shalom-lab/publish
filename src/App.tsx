@@ -13,7 +13,9 @@ import {
   downloadAllRis,
   downloadPdfZip,
   exportExcel,
+  publicationsToCsv,
 } from './lib/export'
+import { copyText } from './lib/copy'
 import {
   loadPublicationsJson,
   loadSettings,
@@ -25,6 +27,22 @@ import {
 import { createEmptyPublication, dateSortKey } from './lib/publication'
 import type { GithubSettings, Publication, PublicationKey } from './types'
 import { DATA_PATH } from './types'
+
+function normalizePublication(raw: Publication): Publication {
+  const base = createEmptyPublication()
+  const date = (raw.date || '').replace(/^(\d{4})\/(\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2, '0')}`)
+  return {
+    ...base,
+    ...raw,
+    date,
+    isFirstAuthor: raw.isFirstAuthor ?? raw.rank === 1,
+    isCorresponding: raw.isCorresponding ?? false,
+    coFirst: raw.coFirst ?? false,
+    volume: raw.volume ?? '',
+    issue: raw.issue ?? '',
+    pages: raw.pages ?? '',
+  }
+}
 
 function defaultVisible(): Set<PublicationKey> {
   return new Set(COLUMNS.filter((c) => c.defaultVisible !== false).map((c) => c.key))
@@ -47,8 +65,8 @@ function comparePubs(a: Publication, b: Publication, key: PublicationKey, dir: S
     const nb = parseFloat(String(b[key] || '')) || -1
     return mul * (na - nb)
   }
-  if (key === 'coFirst') {
-    return mul * (Number(a.coFirst) - Number(b.coFirst))
+  if (key === 'coFirst' || key === 'isFirstAuthor' || key === 'isCorresponding') {
+    return mul * (Number(a[key]) - Number(b[key]))
   }
   const sa = String(a[key] ?? '')
   const sb = String(b[key] ?? '')
@@ -82,7 +100,7 @@ export default function App() {
     try {
       const { publications: raw, sha } = await loadPublicationsJson(s)
       if (!Array.isArray(raw)) throw new Error('数据格式错误：应为数组')
-      setPublications(raw as Publication[])
+      setPublications((raw as Publication[]).map(normalizePublication))
       setFileSha(sha)
       setDirty(false)
       setUnlocked(true)
@@ -253,6 +271,11 @@ export default function App() {
         onExportExcel={() => {
           exportExcel(sortedPublications)
           toast('Excel 已下载')
+        }}
+        onCopyAllCsv={async () => {
+          const csv = publicationsToCsv(sortedPublications)
+          const ok = await copyText(csv)
+          toast(ok ? `已复制 ${sortedPublications.length} 条 CSV` : '复制失败')
         }}
         onDownloadFullPdfs={async () => {
           try {

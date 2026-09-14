@@ -18,6 +18,8 @@ export function createEmptyPublication(): Publication {
     indexing: '',
     firstAuthor: '',
     authors: '',
+    isFirstAuthor: false,
+    isCorresponding: false,
     correspondingAuthor: '',
     coFirst: false,
     rank: null,

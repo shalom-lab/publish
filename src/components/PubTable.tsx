@@ -20,7 +20,7 @@ interface Props {
 
 function cellText(pub: Publication, key: PublicationKey): string {
   const v = pub[key]
-  if (key === 'coFirst') return v ? '是' : '否'
+  if (key === 'coFirst' || key === 'isFirstAuthor' || key === 'isCorresponding') return v ? '是' : '否'
   if (v === null || v === undefined) return ''
   return String(v)
 }
@@ -179,7 +179,14 @@ export function PubTable({
                   )
                 }
 
-                if (c.key === 'coFirst') {
+                if (c.key === 'coFirst' || c.key === 'isFirstAuthor' || c.key === 'isCorresponding') {
+                  const on = Boolean(pub[c.key])
+                  const chipClass =
+                    c.key === 'isCorresponding'
+                      ? 'chip chip-corr'
+                      : c.key === 'isFirstAuthor'
+                        ? 'chip chip-first'
+                        : 'chip chip-co'
                   return (
                     <td key={c.key}>
                       <button
@@ -188,7 +195,7 @@ export function PubTable({
                         title={text}
                         onClick={(e) => onCopy(text, e)}
                       >
-                        {pub.coFirst ? <span className="chip chip-co">是</span> : <span className="muted">否</span>}
+                        {on ? <span className={chipClass}>是</span> : <span className="muted">否</span>}
                       </button>
                     </td>
                   )

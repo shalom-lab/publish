@@ -31,7 +31,7 @@ export function generateRis(pub: Publication): string {
   const year = resolveYear(pub)
   if (year && year !== 'XXXX') lines.push(`PY  - ${year}`)
   if (pub.date) {
-    const m = pub.date.match(/(\d{4})\/(\d{1,2})/)
+    const m = pub.date.match(/(\d{4})\D+(\d{1,2})/)
     if (m) lines.push(`DA  - ${m[1]}/${m[2].padStart(2, '0')}/01`)
   }
   if (pub.volume) lines.push(`VL  - ${pub.volume}`)

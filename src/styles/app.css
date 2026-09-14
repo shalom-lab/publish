@@ -420,6 +420,8 @@ th.sticky-col { z-index: 6; }
 .chip-cas { background: #e8f4ec; color: var(--primary); }
 .chip-rank { background: #f1e9f8; color: #5b3d7a; }
 .chip-co { background: #fde8e6; color: var(--danger); }
+.chip-first { background: #e7f0ff; color: #2f5f9e; }
+.chip-corr { background: #fff3d6; color: #8a5a00; }
 
 .link-cell {
   display: flex;

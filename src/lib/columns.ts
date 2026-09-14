@@ -1,7 +1,7 @@
 import type { ColumnDef } from '../types'
 
 export const COLUMNS: ColumnDef[] = [
-  { key: 'date', label: '发表年月', defaultVisible: true, sortable: true },
+  { key: 'date', label: 'A-B', defaultVisible: true, sortable: true },
   { key: 'year', label: '年份', defaultVisible: false, sortable: true },
   { key: 'title', label: '题目', defaultVisible: true, sortable: true },
   { key: 'journal', label: '刊物', defaultVisible: true, sortable: true },
@@ -12,10 +12,12 @@ export const COLUMNS: ColumnDef[] = [
   { key: 'cas', label: '中科院分区', defaultVisible: true, sortable: true },
   { key: 'indexing', label: '收录', defaultVisible: true },
   { key: 'firstAuthor', label: '第一作者', defaultVisible: true, sortable: true },
-  { key: 'authors', label: '全部作者', defaultVisible: false },
+  { key: 'authors', label: '全部作者', defaultVisible: true },
+  { key: 'isFirstAuthor', label: '是否第一作者', defaultVisible: true, sortable: true },
+  { key: 'isCorresponding', label: '是否通讯作者', defaultVisible: true, sortable: true },
   { key: 'correspondingAuthor', label: '通讯作者', defaultVisible: true },
-  { key: 'coFirst', label: '共一', defaultVisible: true },
-  { key: 'rank', label: '排名', defaultVisible: true, sortable: true },
+  { key: 'coFirst', label: '是否共一', defaultVisible: true },
+  { key: 'rank', label: '本人排名', defaultVisible: true, sortable: true },
   { key: 'totalAuthors', label: '总人数', defaultVisible: true, sortable: true },
   { key: 'myContribution', label: '本人贡献', defaultVisible: false },
   { key: 'citations', label: '引用', defaultVisible: false, sortable: true },
