@@ -20,7 +20,6 @@ import { copyText } from './lib/copy'
 import {
   loadPublicationsJson,
   loadSettings,
-  createPdfTempUrl,
   readToken,
   savePublicationsJson,
   saveSettings,
@@ -388,38 +387,6 @@ export default function App() {
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
-          onOpenPdf={(pub, kind) => {
-            const path = kind === 'full' ? pub.pdfFull : pub.pdfFirst
-            const fallback = pub.online || pub.pubmed
-            const tab = window.open('about:blank', '_blank')
-            toast('正在打开…')
-            void (async () => {
-              try {
-                const tempUrl = path ? await createPdfTempUrl(settings, path) : null
-                if (tempUrl) {
-                  if (tab) tab.location.replace(tempUrl)
-                  else window.open(tempUrl, '_blank', 'noopener,noreferrer')
-                  toast('已打开临时 PDF 预览')
-                  return
-                }
-              } catch (err) {
-                toast(err instanceof Error ? err.message : '拉取 PDF 失败')
-              }
-              try {
-                const u = new URL(fallback)
-                if (u.protocol === 'http:' || u.protocol === 'https:') {
-                  if (tab) tab.location.replace(u.href)
-                  else window.open(u.href, '_blank', 'noopener,noreferrer')
-                  toast('仓库中还没有 PDF，已打开论文 online 链接')
-                  return
-                }
-              } catch {
-                /* ignore */
-              }
-              tab?.close()
-              toast('未找到 PDF。请把文件推到仓库 public/paper/ 或 paper/，或填写论文 online 链接')
-            })()
-          }}
         />
       )}
 
@@ -457,6 +424,7 @@ export default function App() {
         settings={settings}
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
+        onClearToken={lockSession}
         onSaved={(s) => {
           if (!s.token) {
             setUnlocked(false)

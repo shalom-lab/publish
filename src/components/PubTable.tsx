@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react'
 import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
 import { downloadRis } from '../lib/export'
-import { rankDisplay } from '../lib/publication'
+import { paperViewUrl, rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
 
 export type SortDir = 'asc' | 'desc'
@@ -19,7 +19,6 @@ interface Props {
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onToggleSelectAll: () => void
-  onOpenPdf: (pub: Publication, kind: 'full' | 'first') => void
 }
 
 function cellText(pub: Publication, key: PublicationKey): string {
@@ -73,7 +72,6 @@ export function PubTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
-  onOpenPdf,
 }: Props) {
   const cols = columns.filter((c) => visible.has(c.key))
   const allSelected = publications.length > 0 && publications.every((p) => selectedIds.has(p.id))
@@ -186,23 +184,20 @@ export function PubTable({
                 }
 
                 if (c.key === 'pdfFull' || c.key === 'pdfFirst') {
-                  const label = c.key === 'pdfFull' ? '全文' : '首页'
+                  const kind = c.key === 'pdfFull' ? 'full' : 'first'
+                  const href = safeHttpUrl(paperViewUrl(pub, kind))
+                  const label = kind === 'full' ? '全文' : '首页'
                   return (
                     <td key={c.key}>
-                      {text ? (
-                        <div className="link-cell">
-                          <button
-                            type="button"
-                            className="text-link btn-link"
-                            title={`打开：${text}`}
-                            onClick={() => onOpenPdf(pub, c.key === 'pdfFull' ? 'full' : 'first')}
-                          >
+                      <div className="link-cell">
+                        {href ? (
+                          <a className="text-link" href={href} target="_blank" rel="noreferrer" title={href}>
                             {label}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="muted pad">—</span>
-                      )}
+                          </a>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
+                      </div>
                     </td>
                   )
                 }

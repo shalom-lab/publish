@@ -45,14 +45,9 @@ npm run dev
 
 ## PDF
 
-站点 **不会** 从 GitHub Pages 直接打开 PDF（`public/paper` 目前是空的，Pages 上会 404）。
+仓库里目前 **没有** 上传 PDF 文件。表格里的「全文 / 首页」会直接打开该篇的 **DOI / Pubmed**（和「在线链接」同类，用浏览器原生跳转，避免弹窗拦截）。
 
-点击「全文 / 首页」时：用 Token 从仓库读取文件，生成浏览器临时预览地址（blob URL）。文件可放在：
-
-- `public/paper/`（会随 Pages 部署，公开可见）
-- 或仓库根目录 `paper/`（不进 Pages，仅 Token 可预览）
-
-命名：
+若以后要把本地 PDF 放进仓库，命名如下，放到 `public/paper/` 或 `paper/`：
 
 ```text
 {第一作者}_{发表年份}_{杂志名}_{标题截断}__full.pdf

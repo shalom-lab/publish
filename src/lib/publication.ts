@@ -29,6 +29,14 @@ export function defaultFirstAuthorRank(pub: Pick<Publication, 'isFirstAuthor' | 
   return pub.coFirst ? '1/2' : '1/1'
 }
 
+export function paperViewUrl(
+  pub: Pick<Publication, 'online' | 'pubmed'>,
+  kind: 'full' | 'first',
+): string {
+  if (kind === 'full') return (pub.online || pub.pubmed || '').trim()
+  return (pub.pubmed || pub.online || '').trim()
+}
+
 export function splitPubmedAndOnline(pubmed: string, online: string): { pubmed: string; online: string } {
   const p = (pubmed || '').trim()
   const o = (online || '').trim()
