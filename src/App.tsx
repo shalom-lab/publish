@@ -247,7 +247,7 @@ export default function App() {
     setDirty(false)
     setSelectedIds(new Set())
     clearPdfPreviewCache()
-    toast('已锁定，数据已从页面清除')
+    toast('已清除 Token，页面数据已清空')
   }
 
   const stats = useMemo(() => {
@@ -274,6 +274,7 @@ export default function App() {
           settings={settings}
           onChange={setSettings}
           onClose={() => setSettingsOpen(false)}
+          onClearToken={lockSession}
           onSaved={(s) => {
             if (s.token) void fetchData(s)
           }}
@@ -362,9 +363,6 @@ export default function App() {
       <div className="toolbar-extra">
         <button type="button" className="btn ghost" onClick={() => void fetchData(settings)}>
           重新加载
-        </button>
-        <button type="button" className="btn ghost" onClick={lockSession}>
-          锁定 / 清除 Token
         </button>
       </div>
 

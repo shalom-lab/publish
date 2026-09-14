@@ -7,9 +7,10 @@ interface Props {
   onChange: (s: GithubSettings) => void
   onClose: () => void
   onSaved?: (s: GithubSettings) => void
+  onClearToken?: () => void
 }
 
-export function SettingsModal({ open, settings, onChange, onClose, onSaved }: Props) {
+export function SettingsModal({ open, settings, onChange, onClose, onSaved, onClearToken }: Props) {
   if (!open) return null
 
   const update = (patch: Partial<GithubSettings>) => {
@@ -19,6 +20,11 @@ export function SettingsModal({ open, settings, onChange, onClose, onSaved }: Pr
   }
 
   const clearToken = () => {
+    onClose()
+    if (onClearToken) {
+      onClearToken()
+      return
+    }
     writeToken('')
     const next = { ...settings, token: '' }
     onChange(next)
@@ -36,6 +42,7 @@ export function SettingsModal({ open, settings, onChange, onClose, onSaved }: Pr
         </header>
         <p className="hint">
           Token 保存在 <code>localStorage[{TOKEN_KEY}]</code>。也可由扩展/脚本预先注入该键。需 Contents 读写权限。
+          清除 Token 即退出：页面上的论文会被清空，需重新粘贴 Token 才能查看。
         </p>
         <div className="form-grid">
           <label>
@@ -74,7 +81,7 @@ export function SettingsModal({ open, settings, onChange, onClose, onSaved }: Pr
           </label>
         </div>
         <div className="row-actions end" style={{ marginTop: 12 }}>
-          <button type="button" className="btn ghost" onClick={clearToken}>
+          <button type="button" className="btn ghost" onClick={clearToken} disabled={!settings.token}>
             清除 Token
           </button>
           <button
