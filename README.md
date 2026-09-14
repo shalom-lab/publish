@@ -41,7 +41,7 @@ npm run dev
 | 数据路径 | `data/publications.json` |
 | 权限 | Contents: Read and write |
 
-解锁后可「保存到 GitHub」「锁定 / 清除 Token」。
+解锁后可「保存到 GitHub」。退出请到右上角设置里「清除 Token」（会同时清空页面数据）。
 
 ## PDF
 
