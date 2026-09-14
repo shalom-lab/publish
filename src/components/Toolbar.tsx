@@ -8,12 +8,15 @@ interface Props {
   onAdd: () => void
   onSaveRemote: () => void
   onExportExcel: () => void
-  onCopyAllCsv: () => void
+  onCopyCsv: () => void
   onDownloadFullPdfs: () => void
   onDownloadFirstPdfs: () => void
-  onDownloadAllRis: () => void
+  onDownloadRis: () => void
+  onSelectAll: () => void
   saving: boolean
   canSave: boolean
+  selectedCount: number
+  totalCount: number
 }
 
 export function Toolbar({
@@ -23,13 +26,19 @@ export function Toolbar({
   onAdd,
   onSaveRemote,
   onExportExcel,
-  onCopyAllCsv,
+  onCopyCsv,
   onDownloadFullPdfs,
   onDownloadFirstPdfs,
-  onDownloadAllRis,
+  onDownloadRis,
+  onSelectAll,
   saving,
   canSave,
+  selectedCount,
+  totalCount,
 }: Props) {
+  const hasSelection = selectedCount > 0
+  const allSelected = totalCount > 0 && selectedCount === totalCount
+
   return (
     <div className="toolbar">
       <div className="toolbar-group">
@@ -46,20 +55,30 @@ export function Toolbar({
         </button>
       </div>
       <div className="toolbar-group">
-        <button type="button" className="btn secondary" onClick={onCopyAllCsv}>
-          复制全部 CSV
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={onSelectAll}
+          disabled={totalCount === 0}
+          title={allSelected ? '取消全选' : '选中当前列表全部论文'}
+        >
+          {allSelected ? '取消全选' : '全部选中'}
         </button>
-        <button type="button" className="btn secondary" onClick={onExportExcel}>
+        <span className="select-count">{hasSelection ? `已选 ${selectedCount}` : '未选中'}</span>
+        <button type="button" className="btn secondary" onClick={onCopyCsv} disabled={!hasSelection}>
+          复制 CSV
+        </button>
+        <button type="button" className="btn secondary" onClick={onExportExcel} disabled={!hasSelection}>
           下载 Excel
         </button>
-        <button type="button" className="btn secondary" onClick={onDownloadFullPdfs}>
-          下载全部全文 PDF
+        <button type="button" className="btn secondary" onClick={onDownloadFullPdfs} disabled={!hasSelection}>
+          下载全文 PDF
         </button>
-        <button type="button" className="btn secondary" onClick={onDownloadFirstPdfs}>
-          下载全部首页 PDF
+        <button type="button" className="btn secondary" onClick={onDownloadFirstPdfs} disabled={!hasSelection}>
+          下载首页 PDF
         </button>
-        <button type="button" className="btn secondary" onClick={onDownloadAllRis}>
-          下载全部 RIS
+        <button type="button" className="btn secondary" onClick={onDownloadRis} disabled={!hasSelection}>
+          下载 RIS
         </button>
       </div>
       <ColumnToggle columns={columns} visible={visible} onToggle={onToggleColumn} />

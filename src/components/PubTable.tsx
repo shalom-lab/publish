@@ -17,6 +17,9 @@ interface Props {
   onSort: (key: PublicationKey) => void
   onEdit: (pub: Publication) => void
   onDelete: (id: string) => void
+  selectedIds: Set<string>
+  onToggleSelect: (id: string) => void
+  onToggleSelectAll: () => void
 }
 
 function cellText(pub: Publication, key: PublicationKey): string {
@@ -86,8 +89,13 @@ export function PubTable({
   onSort,
   onEdit,
   onDelete,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
 }: Props) {
   const cols = columns.filter((c) => visible.has(c.key))
+  const allSelected = publications.length > 0 && publications.every((p) => selectedIds.has(p.id))
+  const someSelected = publications.some((p) => selectedIds.has(p.id))
 
   const onCopy = async (text: string, e?: MouseEvent) => {
     e?.stopPropagation()
@@ -100,6 +108,18 @@ export function PubTable({
       <table className="pub-table">
         <thead>
           <tr>
+            <th className="sticky-col select-col">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected && !allSelected
+                }}
+                onChange={onToggleSelectAll}
+                title={allSelected ? '取消全选' : '全部选中'}
+                aria-label={allSelected ? '取消全选' : '全部选中'}
+              />
+            </th>
             <th className="sticky-col actions-col">操作</th>
             {cols.map((c) => {
               const active = sortKey === c.key
@@ -132,7 +152,15 @@ export function PubTable({
         </thead>
         <tbody>
           {publications.map((pub) => (
-            <tr key={pub.id}>
+            <tr key={pub.id} className={selectedIds.has(pub.id) ? 'row-selected' : undefined}>
+              <td className="sticky-col select-col">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(pub.id)}
+                  onChange={() => onToggleSelect(pub.id)}
+                  aria-label={`选中 ${pub.title || pub.id}`}
+                />
+              </td>
               <td className="sticky-col actions-col">
                 <div className="row-btns">
                   <button type="button" className="btn tiny" onClick={() => onEdit(pub)}>

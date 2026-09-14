@@ -344,7 +344,38 @@ button, input, textarea { font: inherit; }
   background: #f8fbf9;
 }
 th.sticky-col { z-index: 6; }
-.actions-col { min-width: 118px; }
+.select-col {
+  width: 36px;
+  min-width: 36px;
+  text-align: center;
+  left: 0;
+  padding: 7px 0;
+  vertical-align: middle;
+}
+td.select-col {
+  height: 34px;
+  padding: 0;
+  vertical-align: middle;
+}
+.select-col input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+.actions-col {
+  min-width: 118px;
+  left: 36px;
+}
+.pub-table tbody tr.row-selected td { background: #eef6f1; }
+.pub-table tbody tr.row-selected .sticky-col { background: #e4f0e9; }
+.select-count {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  padding: 0 2px;
+}
 
 .cell-btn {
   display: block;
@@ -380,7 +411,9 @@ th.sticky-col { z-index: 6; }
   gap: 4px;
   border: 0;
   background: transparent;
-  padding: 0;
+  padding: 7px 8px;
+  margin: -7px -8px;
+  min-height: 32px;
   cursor: pointer;
   font: inherit;
   font-weight: 650;

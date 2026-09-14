@@ -104,6 +104,7 @@ export default function App() {
   const [sortKey, setSortKey] = useState<PublicationKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [pendingDelete, setPendingDelete] = useState<Publication | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
 
   const fetchData = useCallback(async (s: GithubSettings) => {
     if (!s.token) {
@@ -140,6 +141,34 @@ export default function App() {
     () => [...publications].sort((a, b) => comparePubs(a, b, sortKey, sortDir)),
     [publications, sortKey, sortDir],
   )
+
+  const selectedPublications = useMemo(
+    () => sortedPublications.filter((p) => selectedIds.has(p.id)),
+    [sortedPublications, selectedIds],
+  )
+
+  useEffect(() => {
+    const valid = new Set(publications.map((p) => p.id))
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => valid.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [publications])
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    const ids = sortedPublications.map((p) => p.id)
+    const allOn = ids.length > 0 && ids.every((id) => selectedIds.has(id))
+    setSelectedIds(allOn ? new Set() : new Set(ids))
+  }
 
   const handleSort = (key: PublicationKey) => {
     if (key === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -214,6 +243,7 @@ export default function App() {
     setPublications([])
     setFileSha(null)
     setDirty(false)
+    setSelectedIds(new Set())
     toast('已锁定，数据已从页面清除')
   }
 
@@ -285,34 +315,42 @@ export default function App() {
           setEditOpen(true)
         }}
         onSaveRemote={handleSaveRemote}
+        onSelectAll={toggleSelectAll}
+        selectedCount={selectedPublications.length}
+        totalCount={sortedPublications.length}
         onExportExcel={() => {
-          exportExcel(sortedPublications)
-          toast('Excel 已下载')
+          if (!selectedPublications.length) return
+          exportExcel(selectedPublications)
+          toast(`Excel 已下载（${selectedPublications.length} 篇）`)
         }}
-        onCopyAllCsv={async () => {
-          const csv = publicationsToCsv(sortedPublications)
+        onCopyCsv={async () => {
+          if (!selectedPublications.length) return
+          const csv = publicationsToCsv(selectedPublications)
           const ok = await copyText(csv)
           toast(ok ? '复制成功' : '复制失败')
         }}
         onDownloadFullPdfs={async () => {
+          if (!selectedPublications.length) return
           try {
-            const r = await downloadPdfZip(sortedPublications, 'full', 'pdfs-full.zip')
+            const r = await downloadPdfZip(selectedPublications, 'full', 'pdfs-full.zip')
             toast(`全文 PDF：成功 ${r.ok}，缺失 ${r.missing}`)
           } catch (err) {
             toast(err instanceof Error ? err.message : '下载失败')
           }
         }}
         onDownloadFirstPdfs={async () => {
+          if (!selectedPublications.length) return
           try {
-            const r = await downloadPdfZip(sortedPublications, 'first', 'pdfs-first.zip')
+            const r = await downloadPdfZip(selectedPublications, 'first', 'pdfs-first.zip')
             toast(`首页 PDF：成功 ${r.ok}，缺失 ${r.missing}`)
           } catch (err) {
             toast(err instanceof Error ? err.message : '下载失败')
           }
         }}
-        onDownloadAllRis={() => {
-          downloadAllRis(sortedPublications)
-          toast('RIS 已下载')
+        onDownloadRis={() => {
+          if (!selectedPublications.length) return
+          downloadAllRis(selectedPublications)
+          toast(`RIS 已下载（${selectedPublications.length} 篇）`)
         }}
         saving={saving}
         canSave={canSave}
@@ -346,6 +384,9 @@ export default function App() {
             setEditOpen(true)
           }}
           onDelete={requestDelete}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
         />
       )}
 
