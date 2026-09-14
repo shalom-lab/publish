@@ -101,6 +101,10 @@ export async function downloadPdfZip(
   return { ok, missing }
 }
 
+export function publicationsToRis(publications: Publication[]): string {
+  return publications.map((p) => p.ris?.trim()).filter(Boolean).join('\r\n\r\n')
+}
+
 export function downloadRis(pub: Publication): void {
   const blob = new Blob([pub.ris || ''], { type: 'application/x-research-info-systems;charset=utf-8' })
   const safe = (pub.title || pub.id || 'paper').slice(0, 40).replace(/[^\w\u4e00-\u9fff]+/g, '_')
@@ -108,7 +112,9 @@ export function downloadRis(pub: Publication): void {
 }
 
 export function downloadAllRis(publications: Publication[], filename = 'publications.ris'): void {
-  const text = publications.map((p) => p.ris?.trim()).filter(Boolean).join('\r\n\r\n')
-  const blob = new Blob([text + '\r\n'], { type: 'application/x-research-info-systems;charset=utf-8' })
+  const text = publicationsToRis(publications)
+  const blob = new Blob([text + (text ? '\r\n' : '')], {
+    type: 'application/x-research-info-systems;charset=utf-8',
+  })
   saveAs(blob, filename)
 }

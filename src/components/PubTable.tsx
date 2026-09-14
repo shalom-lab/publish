@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react'
 import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
 import { downloadRis } from '../lib/export'
+import { copyText } from '../lib/copy'
 import { assetUrl } from '../lib/pdfName'
 import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
@@ -157,10 +158,23 @@ export function PubTable({
                   <button
                     type="button"
                     className="btn tiny"
+                    onClick={async () => {
+                      const ok = await copyText(pub.ris || '')
+                      toast(ok ? '复制成功' : '复制失败')
+                    }}
+                    disabled={!pub.ris}
+                    title="复制 RIS"
+                  >
+                    复制RIS
+                  </button>
+                  <button
+                    type="button"
+                    className="btn tiny"
                     onClick={() => downloadRis(pub)}
                     disabled={!pub.ris}
+                    title="下载 RIS"
                   >
-                    RIS
+                    下载RIS
                   </button>
                 </div>
               </td>

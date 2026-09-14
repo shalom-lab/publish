@@ -12,6 +12,7 @@ interface Props {
   onDownloadFullPdfs: () => void
   onDownloadFirstPdfs: () => void
   onDownloadRis: () => void
+  onCopyRis: () => void
   onSelectAll: () => void
   saving: boolean
   canSave: boolean
@@ -30,6 +31,7 @@ export function Toolbar({
   onDownloadFullPdfs,
   onDownloadFirstPdfs,
   onDownloadRis,
+  onCopyRis,
   onSelectAll,
   saving,
   canSave,
@@ -75,6 +77,9 @@ export function Toolbar({
         </button>
         <button type="button" className="btn secondary" onClick={onDownloadFirstPdfs} disabled={!hasSelection}>
           下载首页 PDF
+        </button>
+        <button type="button" className="btn secondary" onClick={onCopyRis} disabled={!hasSelection}>
+          复制 RIS
         </button>
         <button type="button" className="btn secondary" onClick={onDownloadRis} disabled={!hasSelection}>
           下载 RIS

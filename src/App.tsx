@@ -10,12 +10,7 @@ import { ToastHost, toast } from './components/Toast'
 import { Toolbar } from './components/Toolbar'
 import { TopBar } from './components/TopBar'
 import { COLUMNS } from './lib/columns'
-import {
-  downloadAllRis,
-  downloadPdfZip,
-  exportExcel,
-  publicationsToCsv,
-} from './lib/export'
+import { downloadAllRis, downloadPdfZip, exportExcel, publicationsToCsv, publicationsToRis } from './lib/export'
 import { copyText } from './lib/copy'
 import {
   loadPublicationsJson,
@@ -347,6 +342,16 @@ export default function App() {
           } catch (err) {
             toast(err instanceof Error ? err.message : '下载失败')
           }
+        }}
+        onCopyRis={async () => {
+          if (!selectedPublications.length) return
+          const text = publicationsToRis(selectedPublications)
+          if (!text) {
+            toast('选中条目没有 RIS')
+            return
+          }
+          const ok = await copyText(text)
+          toast(ok ? '复制成功' : '复制失败')
         }}
         onDownloadRis={() => {
           if (!selectedPublications.length) return

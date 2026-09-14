@@ -378,7 +378,7 @@ td.select-col {
   accent-color: var(--primary);
 }
 .actions-col {
-  min-width: 118px;
+  min-width: 168px;
   left: 36px;
 }
 .pub-table tbody tr.row-selected td { background: #eef6f1; }
