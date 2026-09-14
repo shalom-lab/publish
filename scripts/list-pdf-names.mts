@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import type { Publication } from '../src/types.ts'
 import { buildPdfBasename } from '../src/lib/pdfName.ts'
 
-const pubs = JSON.parse(readFileSync('public/data/publications.json', 'utf8')) as Publication[]
+const pubs = JSON.parse(readFileSync('data/publications.json', 'utf8')) as Publication[]
 
 for (const p of pubs) {
   const base = buildPdfBasename(p)

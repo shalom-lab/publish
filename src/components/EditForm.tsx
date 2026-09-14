@@ -66,12 +66,28 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             <input value={form.journal} onChange={(e) => set('journal', e.target.value)} />
           </label>
           <label>
+            卷
+            <input value={form.volume} onChange={(e) => set('volume', e.target.value)} placeholder="42" />
+          </label>
+          <label>
+            期
+            <input value={form.issue} onChange={(e) => set('issue', e.target.value)} placeholder="2" />
+          </label>
+          <label>
+            页码
+            <input value={form.pages} onChange={(e) => set('pages', e.target.value)} placeholder="352-361" />
+          </label>
+          <label>
             当年影响因子
-            <input value={form.impactFactor} onChange={(e) => set('impactFactor', e.target.value)} />
+            <input
+              value={form.impactFactor}
+              onChange={(e) => set('impactFactor', e.target.value)}
+              placeholder="中文刊可留空"
+            />
           </label>
           <label>
             中科院分区
-            <input value={form.cas} onChange={(e) => set('cas', e.target.value)} placeholder="如 2区" />
+            <input value={form.cas} onChange={(e) => set('cas', e.target.value)} placeholder="如 医学3区" />
           </label>
           <label>
             收录情况

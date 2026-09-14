@@ -1,18 +1,26 @@
 import type { GithubSettings } from '../types'
-import { saveSettings } from '../lib/github'
+import { saveSettings, TOKEN_KEY, writeToken } from '../lib/github'
 
 interface Props {
   open: boolean
   settings: GithubSettings
   onChange: (s: GithubSettings) => void
   onClose: () => void
+  onSaved?: (s: GithubSettings) => void
 }
 
-export function SettingsModal({ open, settings, onChange, onClose }: Props) {
+export function SettingsModal({ open, settings, onChange, onClose, onSaved }: Props) {
   if (!open) return null
 
   const update = (patch: Partial<GithubSettings>) => {
     const next = { ...settings, ...patch }
+    onChange(next)
+    saveSettings(next)
+  }
+
+  const clearToken = () => {
+    writeToken('')
+    const next = { ...settings, token: '' }
     onChange(next)
     saveSettings(next)
   }
@@ -27,20 +35,19 @@ export function SettingsModal({ open, settings, onChange, onClose }: Props) {
           </button>
         </header>
         <p className="hint">
-          Token 仅保存在当前浏览器 sessionStorage，刷新标签页后需重新填写。需要具备仓库 Contents 写权限（classic PAT 勾选
-          repo，或 fine-grained 授权 Contents: Read and write）。
+          Token 保存在 <code>localStorage[{TOKEN_KEY}]</code>。也可由扩展/脚本预先注入该键。需 Contents 读写权限。
         </p>
         <div className="form-grid">
           <label>
-            Owner（用户名或组织）
+            Owner
             <input
               value={settings.owner}
               onChange={(e) => update({ owner: e.target.value.trim() })}
-              placeholder="your-github-username"
+              placeholder="shalom-lab"
             />
           </label>
           <label>
-            仓库名
+            仓库
             <input
               value={settings.repo}
               onChange={(e) => update({ repo: e.target.value.trim() })}
@@ -65,6 +72,22 @@ export function SettingsModal({ open, settings, onChange, onClose }: Props) {
               placeholder="ghp_..."
             />
           </label>
+        </div>
+        <div className="row-actions end" style={{ marginTop: 12 }}>
+          <button type="button" className="btn ghost" onClick={clearToken}>
+            清除 Token
+          </button>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => {
+              saveSettings(settings)
+              onSaved?.(settings)
+              onClose()
+            }}
+          >
+            保存
+          </button>
         </div>
         <p className="hint warn">请勿截图或分享含 Token 的界面。</p>
       </div>

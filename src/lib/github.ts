@@ -1,20 +1,56 @@
 import type { GithubSettings } from '../types'
 import { DATA_PATH } from '../types'
 
-const SETTINGS_KEY = 'publish_github_settings'
+/** User-injected PAT key (localStorage). */
+export const TOKEN_KEY = 'gh-token-publish'
+const META_KEY = 'publish_github_meta'
+
+const DEFAULT_META = {
+  owner: 'shalom-lab',
+  repo: 'publish',
+  branch: 'main',
+}
+
+export function readToken(): string {
+  try {
+    return (localStorage.getItem(TOKEN_KEY) || '').trim()
+  } catch {
+    return ''
+  }
+}
+
+export function writeToken(token: string): void {
+  const t = token.trim()
+  if (t) localStorage.setItem(TOKEN_KEY, t)
+  else localStorage.removeItem(TOKEN_KEY)
+}
 
 export function loadSettings(): GithubSettings {
+  let meta = { ...DEFAULT_META }
   try {
-    const raw = sessionStorage.getItem(SETTINGS_KEY)
-    if (raw) return JSON.parse(raw) as GithubSettings
+    const raw = localStorage.getItem(META_KEY)
+    if (raw) meta = { ...meta, ...(JSON.parse(raw) as typeof DEFAULT_META) }
   } catch {
     /* ignore */
   }
-  return { owner: '', repo: 'publish', token: '', branch: 'main' }
+  return {
+    owner: meta.owner || DEFAULT_META.owner,
+    repo: meta.repo || DEFAULT_META.repo,
+    branch: meta.branch || DEFAULT_META.branch,
+    token: readToken(),
+  }
 }
 
 export function saveSettings(settings: GithubSettings): void {
-  sessionStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+  writeToken(settings.token)
+  localStorage.setItem(
+    META_KEY,
+    JSON.stringify({
+      owner: settings.owner.trim(),
+      repo: settings.repo.trim(),
+      branch: settings.branch.trim() || 'main',
+    }),
+  )
 }
 
 function authHeaders(token: string): HeadersInit {
@@ -23,6 +59,13 @@ function authHeaders(token: string): HeadersInit {
     Authorization: `Bearer ${token}`,
     'X-GitHub-Api-Version': '2022-11-28',
   }
+}
+
+function shortErr(status: number, body: string): string {
+  const clipped = body.replace(/\s+/g, ' ').slice(0, 180)
+  if (status === 401 || status === 403) return `鉴权失败 (${status})，请检查 Token 权限`
+  if (status === 404) return `未找到文件 (${status})，请检查仓库路径 ${DATA_PATH}`
+  return `请求失败 (${status}): ${clipped}`
 }
 
 export interface FileContentResult {
@@ -35,12 +78,10 @@ export async function getFileContent(
   path: string = DATA_PATH,
 ): Promise<FileContentResult> {
   const { owner, repo, token, branch } = settings
+  if (!token) throw new Error('缺少 Token')
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`
   const res = await fetch(url, { headers: authHeaders(token) })
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`读取失败 (${res.status}): ${body}`)
-  }
+  if (!res.ok) throw new Error(shortErr(res.status, await res.text()))
   const data = (await res.json()) as { content: string; encoding: string; sha: string }
   const decoded = decodeURIComponent(
     atob(data.content.replace(/\n/g, ''))
@@ -59,6 +100,7 @@ export async function putFileContent(
   path: string = DATA_PATH,
 ): Promise<string> {
   const { owner, repo, token, branch } = settings
+  if (!token) throw new Error('缺少 Token')
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`
   const encoded = btoa(
     encodeURIComponent(content).replace(/%([0-9A-F]{2})/g, (_, p1) =>
@@ -78,12 +120,17 @@ export async function putFileContent(
       branch,
     }),
   })
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`写入失败 (${res.status}): ${body}`)
-  }
+  if (!res.ok) throw new Error(shortErr(res.status, await res.text()))
   const data = (await res.json()) as { content: { sha: string } }
   return data.content.sha
+}
+
+export async function loadPublicationsJson(
+  settings: GithubSettings,
+): Promise<{ publications: unknown; sha: string }> {
+  const file = await getFileContent(settings)
+  const parsed = JSON.parse(file.content) as unknown
+  return { publications: parsed, sha: file.sha }
 }
 
 export async function savePublicationsJson(
@@ -97,5 +144,13 @@ export async function savePublicationsJson(
     const file = await getFileContent(settings)
     currentSha = file.sha
   }
-  return putFileContent(settings, content, currentSha, 'chore: update publications.json via BYOK')
+  try {
+    return await putFileContent(settings, content, currentSha, 'chore: update publications.json via BYOK')
+  } catch (err) {
+    // 409: refresh sha and retry once
+    const msg = err instanceof Error ? err.message : ''
+    if (!msg.includes('(409)')) throw err
+    const file = await getFileContent(settings)
+    return putFileContent(settings, content, file.sha, 'chore: update publications.json via BYOK')
+  }
 }

@@ -4,6 +4,9 @@ export interface Publication {
   year: string
   title: string
   journal: string
+  volume: string
+  issue: string
+  pages: string
   impactFactor: string
   cas: string
   indexing: string
@@ -28,6 +31,8 @@ export interface ColumnDef {
   label: string
   /** default visible */
   defaultVisible?: boolean
+  /** allow header click sort */
+  sortable?: boolean
 }
 
 export interface GithubSettings {
@@ -37,4 +42,4 @@ export interface GithubSettings {
   branch: string
 }
 
-export const DATA_PATH = 'public/data/publications.json'
+export const DATA_PATH = 'data/publications.json'

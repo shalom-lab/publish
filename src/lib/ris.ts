@@ -34,6 +34,14 @@ export function generateRis(pub: Publication): string {
     const m = pub.date.match(/(\d{4})\/(\d{1,2})/)
     if (m) lines.push(`DA  - ${m[1]}/${m[2].padStart(2, '0')}/01`)
   }
+  if (pub.volume) lines.push(`VL  - ${pub.volume}`)
+  if (pub.issue) lines.push(`IS  - ${pub.issue}`)
+  if (pub.pages) {
+    const sp = pub.pages.split(/[-–—]/)[0]?.trim()
+    if (sp) lines.push(`SP  - ${sp}`)
+    const ep = pub.pages.split(/[-–—]/)[1]?.trim()
+    if (ep) lines.push(`EP  - ${ep}`)
+  }
   if (pub.pubmed) lines.push(`UR  - ${pub.pubmed}`)
   if (pub.impactFactor) lines.push(`N1  - Impact Factor: ${pub.impactFactor}`)
   if (pub.cas) lines.push(`N1  - CAS: ${pub.cas}`)

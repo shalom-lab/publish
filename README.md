@@ -1,6 +1,21 @@
 # 发表论文管理（React + Vite + GitHub Pages）
 
-细粒度管理个人论文发表记录：表格展示、单元格一键复制、BYOK 在线 CRUD、Excel / PDF / RIS 导出。
+细粒度管理个人论文发表记录。页面默认锁定，**无 BYOK Token 不加载、不展示任何论文信息**。
+
+## 隐私模型
+
+- 论文 JSON 存放在仓库 [`data/publications.json`](data/publications.json)，**不**放入 `public/`，因此不会随 Pages 静态资源公开托管。
+- 浏览器只从 `localStorage['gh-token-publish']` 读取 Token（也可在解锁页粘贴）。
+- 有 Token 后，经 GitHub Contents API 拉取/写回 `data/publications.json`。
+
+> 若仓库为 **public**，他人仍可能通过 GitHub 网页或 raw 链接看到该文件。若要真正保密，请将仓库设为 **private**，或使用 fine-grained PAT 仅本人可访问。
+
+预先注入示例：
+
+```js
+localStorage.setItem('gh-token-publish', 'ghp_xxx')
+location.reload()
+```
 
 ## 本地开发
 
@@ -9,49 +24,37 @@ npm install
 npm run dev
 ```
 
-访问控制台提示的本地地址（默认 `http://localhost:5173/publish/`）。
+打开 `http://localhost:5173/publish/`。无 Token 时仅显示解锁页。
 
 ## 部署 GitHub Pages
 
-1. 将本仓库推送到 GitHub，仓库名建议为 `publish`
-2. 仓库 Settings → Pages → Source 选择 **GitHub Actions**
-3. 推送到 `main` 后，工作流会构建并发布
-4. 站点地址：`https://<你的用户名>.github.io/publish/`
+1. 推送到 GitHub 仓库 `publish`
+2. Settings → Pages → Source 选 **GitHub Actions**
+3. 站点：`https://shalom-lab.github.io/publish/`
 
-> `vite.config.ts` 中 `base` 为 `/publish/`。若改用用户主页仓库（`username.github.io`），请把 `base` 改为 `/`。
+## BYOK
 
-## BYOK 写回数据
+| 项 | 说明 |
+|----|------|
+| Token 键 | `localStorage.gh-token-publish` |
+| Owner/Repo | 默认 `shalom-lab/publish`，可在设置中改（另存 `publish_github_meta`） |
+| 数据路径 | `data/publications.json` |
+| 权限 | Contents: Read and write |
 
-页面「BYOK 设置」填写：
+解锁后可「保存到 GitHub」「锁定 / 清除 Token」。
 
-- Owner：GitHub 用户名
-- 仓库：`publish`
-- 分支：`main`
-- Token：Personal Access Token（需 Contents 写权限）
+## PDF
 
-保存后点「保存到 GitHub」，会更新仓库中的 `public/data/publications.json`。Token 仅存在当前标签页的 `sessionStorage`。
-
-## PDF 命名规范
-
-将 PDF 放入 `public/paper/`，命名：
+放入 `public/paper/`（静态可访问，勿放不宜公开的全文时可改私有存储）：
 
 ```text
 {第一作者}_{发表年份}_{杂志名}_{标题截断}__full.pdf
 {第一作者}_{发表年份}_{杂志名}_{标题截断}__first.pdf
 ```
 
-编辑表单中可点「按规则生成 PDF 文件名」。JSON 中 `pdfFull` / `pdfFirst` 需与实际文件名一致。
-
-## 字段说明
-
-发表年月、年份、题目、刊物、当年影响因子、中科院分区、收录、第一作者、全部作者、通讯作者、是否共一、本人排名、总人数、本人主要贡献、引用、Pubmed、全文/首页 PDF、RIS。
-
 ## 脚本
 
 ```bash
-# 按脚本重新生成初始 publications.json（会覆盖现有数据）
 npx tsx scripts/generate-data.mts
-
-# 列出每条文献应对应的 PDF 文件名（放入 public/paper/）
 npx tsx scripts/list-pdf-names.mts
 ```

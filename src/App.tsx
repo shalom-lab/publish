@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AuthGate } from './components/AuthGate'
 import { ColumnToggle } from './components/ColumnToggle'
+import { ConfirmDialog } from './components/ConfirmDialog'
 import { EditForm } from './components/EditForm'
 import { PubTable } from './components/PubTable'
+import type { SortDir } from './components/PubTable'
 import { SettingsModal } from './components/SettingsModal'
 import { ToastHost, toast } from './components/Toast'
 import { Toolbar } from './components/Toolbar'
@@ -11,18 +14,52 @@ import {
   downloadPdfZip,
   exportExcel,
 } from './lib/export'
-import { loadSettings, savePublicationsJson } from './lib/github'
-import { createEmptyPublication } from './lib/publication'
+import {
+  loadPublicationsJson,
+  loadSettings,
+  readToken,
+  savePublicationsJson,
+  saveSettings,
+  writeToken,
+} from './lib/github'
+import { createEmptyPublication, dateSortKey } from './lib/publication'
 import type { GithubSettings, Publication, PublicationKey } from './types'
+import { DATA_PATH } from './types'
 
 function defaultVisible(): Set<PublicationKey> {
   return new Set(COLUMNS.filter((c) => c.defaultVisible !== false).map((c) => c.key))
 }
 
+function comparePubs(a: Publication, b: Publication, key: PublicationKey, dir: SortDir): number {
+  const mul = dir === 'asc' ? 1 : -1
+  if (key === 'date' || key === 'year') {
+    const ka = dateSortKey(a.date, a.year)
+    const kb = dateSortKey(b.date, b.year)
+    return mul * ka.localeCompare(kb)
+  }
+  if (key === 'rank' || key === 'totalAuthors') {
+    const na = a[key] ?? -1
+    const nb = b[key] ?? -1
+    return mul * (Number(na) - Number(nb))
+  }
+  if (key === 'impactFactor' || key === 'citations') {
+    const na = parseFloat(String(a[key] || '')) || -1
+    const nb = parseFloat(String(b[key] || '')) || -1
+    return mul * (na - nb)
+  }
+  if (key === 'coFirst') {
+    return mul * (Number(a.coFirst) - Number(b.coFirst))
+  }
+  const sa = String(a[key] ?? '')
+  const sb = String(b[key] ?? '')
+  return mul * sa.localeCompare(sb, 'zh-CN')
+}
+
 export default function App() {
-  const [publications, setPublications] = useState<Publication[]>([])
-  const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState<GithubSettings>(() => loadSettings())
+  const [unlocked, setUnlocked] = useState(() => Boolean(readToken()))
+  const [publications, setPublications] = useState<Publication[]>([])
+  const [loading, setLoading] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [editing, setEditing] = useState<Publication | null>(null)
   const [editOpen, setEditOpen] = useState(false)
@@ -30,27 +67,55 @@ export default function App() {
   const [saving, setSaving] = useState(false)
   const [fileSha, setFileSha] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
+  const [sortKey, setSortKey] = useState<PublicationKey>('date')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [pendingDelete, setPendingDelete] = useState<Publication | null>(null)
 
-  useEffect(() => {
-    const url = `${import.meta.env.BASE_URL}data/publications.json`
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error(String(r.status))
-        return r.json()
-      })
-      .then((data: Publication[]) => {
-        const sorted = [...data].sort((a, b) => {
-          const ya = a.year || a.date || ''
-          const yb = b.year || b.date || ''
-          return yb.localeCompare(ya) || (b.date || '').localeCompare(a.date || '')
-        })
-        setPublications(sorted)
-      })
-      .catch(() => toast('加载 publications.json 失败'))
-      .finally(() => setLoading(false))
+  const fetchData = useCallback(async (s: GithubSettings) => {
+    if (!s.token) {
+      setUnlocked(false)
+      setPublications([])
+      setFileSha(null)
+      return
+    }
+    setLoading(true)
+    try {
+      const { publications: raw, sha } = await loadPublicationsJson(s)
+      if (!Array.isArray(raw)) throw new Error('数据格式错误：应为数组')
+      setPublications(raw as Publication[])
+      setFileSha(sha)
+      setDirty(false)
+      setUnlocked(true)
+      toast('已通过 BYOK 加载数据')
+    } catch (err) {
+      setPublications([])
+      setFileSha(null)
+      toast(err instanceof Error ? err.message : '加载失败')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  const canSave = Boolean(settings.owner && settings.repo && settings.token)
+  useEffect(() => {
+    const s = loadSettings()
+    setSettings(s)
+    if (s.token) void fetchData(s)
+  }, [fetchData])
+
+  const sortedPublications = useMemo(
+    () => [...publications].sort((a, b) => comparePubs(a, b, sortKey, sortDir)),
+    [publications, sortKey, sortDir],
+  )
+
+  const handleSort = (key: PublicationKey) => {
+    if (key === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortKey(key)
+      setSortDir(key === 'date' || key === 'year' || key === 'impactFactor' ? 'desc' : 'asc')
+    }
+  }
+
+  const canSave = Boolean(settings.owner && settings.repo && settings.token && unlocked)
 
   const toggleColumn = (key: PublicationKey) => {
     setVisible((prev) => {
@@ -79,7 +144,13 @@ export default function App() {
 
   const handleDelete = (id: string) => {
     markDirty(publications.filter((p) => p.id !== id))
+    setPendingDelete(null)
     toast('已删除（记得保存到 GitHub）')
+  }
+
+  const requestDelete = (id: string) => {
+    const pub = publications.find((p) => p.id === id) ?? null
+    setPendingDelete(pub)
   }
 
   const handleSaveRemote = async () => {
@@ -93,12 +164,23 @@ export default function App() {
       const sha = await savePublicationsJson(settings, publications, fileSha)
       setFileSha(sha)
       setDirty(false)
-      toast('已写入 GitHub: public/data/publications.json')
+      toast(`已写入 GitHub: ${DATA_PATH}`)
     } catch (err) {
       toast(err instanceof Error ? err.message : '保存失败')
     } finally {
       setSaving(false)
     }
+  }
+
+  const lockSession = () => {
+    writeToken('')
+    saveSettings({ ...settings, token: '' })
+    setSettings((s) => ({ ...s, token: '' }))
+    setUnlocked(false)
+    setPublications([])
+    setFileSha(null)
+    setDirty(false)
+    toast('已锁定，数据已从页面清除')
   }
 
   const stats = useMemo(() => {
@@ -108,15 +190,38 @@ export default function App() {
     return { total, first, sci }
   }, [publications])
 
+  if (!unlocked) {
+    return (
+      <div className="app">
+        <AuthGate
+          settings={settings}
+          onUnlocked={(s) => {
+            setSettings(s)
+            void fetchData(s)
+          }}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+        <SettingsModal
+          open={settingsOpen}
+          settings={settings}
+          onChange={setSettings}
+          onClose={() => setSettingsOpen(false)}
+          onSaved={(s) => {
+            if (s.token) void fetchData(s)
+          }}
+        />
+        <ToastHost />
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <header className="hero">
         <div>
-          <p className="eyebrow">Publication Manager</p>
+          <p className="eyebrow">Publication Manager · BYOK</p>
           <h1>发表论文管理</h1>
-          <p className="sub">
-            细粒度记录 · 单元格一键复制 · BYOK 写回 GitHub · PDF / Excel / RIS 导出
-          </p>
+          <p className="sub">数据仅在本地 Token 鉴权后经 GitHub API 加载，页面不托管论文 JSON。</p>
         </div>
         <div className="stats">
           <div>
@@ -146,12 +251,12 @@ export default function App() {
         onOpenSettings={() => setSettingsOpen(true)}
         onSaveRemote={handleSaveRemote}
         onExportExcel={() => {
-          exportExcel(publications)
+          exportExcel(sortedPublications)
           toast('Excel 已下载')
         }}
         onDownloadFullPdfs={async () => {
           try {
-            const r = await downloadPdfZip(publications, 'full', 'pdfs-full.zip')
+            const r = await downloadPdfZip(sortedPublications, 'full', 'pdfs-full.zip')
             toast(`全文 PDF：成功 ${r.ok}，缺失 ${r.missing}`)
           } catch (err) {
             toast(err instanceof Error ? err.message : '下载失败')
@@ -159,47 +264,70 @@ export default function App() {
         }}
         onDownloadFirstPdfs={async () => {
           try {
-            const r = await downloadPdfZip(publications, 'first', 'pdfs-first.zip')
+            const r = await downloadPdfZip(sortedPublications, 'first', 'pdfs-first.zip')
             toast(`首页 PDF：成功 ${r.ok}，缺失 ${r.missing}`)
           } catch (err) {
             toast(err instanceof Error ? err.message : '下载失败')
           }
         }}
         onDownloadAllRis={() => {
-          downloadAllRis(publications)
+          downloadAllRis(sortedPublications)
           toast('RIS 已下载')
         }}
         saving={saving}
         canSave={canSave}
       />
 
-      {/* ColumnToggle also in toolbar; keep mobile-friendly duplicate via details already */}
+      <div className="toolbar-extra">
+        <button type="button" className="btn ghost" onClick={() => void fetchData(settings)}>
+          重新加载
+        </button>
+        <button type="button" className="btn ghost" onClick={lockSession}>
+          锁定 / 清除 Token
+        </button>
+      </div>
+
       <div className="mobile-only">
         <ColumnToggle columns={COLUMNS} visible={visible} onToggle={toggleColumn} />
       </div>
 
       {loading ? (
-        <p className="loading">加载中…</p>
+        <p className="loading">正在通过 GitHub API 加载…</p>
       ) : (
         <PubTable
-          publications={publications}
+          publications={sortedPublications}
           columns={COLUMNS}
           visible={visible}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={handleSort}
           onEdit={(pub) => {
             setEditing(pub)
             setEditOpen(true)
           }}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
         />
       )}
 
       <footer className="footer">
         <p>
-          PDF 命名：
-          <code>{'{第一作者}_{年份}_{杂志}_{标题截断}__full|first.pdf'}</code>
-          ，放入 <code>public/paper/</code>
+          数据文件：<code>{DATA_PATH}</code>（不进入 Pages 静态资源）。Token 键：
+          <code>gh-token-publish</code>
         </p>
       </footer>
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="确认删除这篇论文？"
+        message="删除后可在「保存到 GitHub」前通过重新加载恢复（未同步时）。"
+        detail={pendingDelete?.title}
+        confirmLabel="确认删除"
+        cancelLabel="再想想"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) handleDelete(pendingDelete.id)
+        }}
+      />
 
       <EditForm
         open={editOpen}
@@ -215,6 +343,14 @@ export default function App() {
         settings={settings}
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
+        onSaved={(s) => {
+          if (!s.token) {
+            setUnlocked(false)
+            setPublications([])
+          } else {
+            void fetchData(s)
+          }
+        }}
       />
       <ToastHost />
     </div>

@@ -10,6 +10,9 @@ export function createEmptyPublication(): Publication {
     year: '',
     title: '',
     journal: '',
+    volume: '',
+    issue: '',
+    pages: '',
     impactFactor: '',
     cas: '',
     indexing: '',
@@ -40,4 +43,12 @@ export function syncDerivedFields(pub: Publication): Publication {
     pdfFirst: pub.pdfFirst || paths.pdfFirst,
   }
   return { ...next, ris: pub.ris?.trim() ? pub.ris : generateRis(next) }
+}
+
+/** Parse date like 2023/11 or 2023-11 for sorting. */
+export function dateSortKey(date: string, year: string): string {
+  const m = date?.match(/(\d{4})\D+(\d{1,2})/)
+  if (m) return `${m[1]}${m[2].padStart(2, '0')}`
+  if (year) return `${year}00`
+  return '000000'
 }
