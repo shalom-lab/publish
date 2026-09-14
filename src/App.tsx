@@ -20,10 +20,12 @@ import { copyText } from './lib/copy'
 import {
   loadPublicationsJson,
   loadSettings,
+  createPdfTempUrl,
   readToken,
   savePublicationsJson,
   saveSettings,
   writeToken,
+  clearPdfPreviewCache,
 } from './lib/github'
 import { createEmptyPublication, dateSortKey, lastAuthor, splitPubmedAndOnline, defaultFirstAuthorRank, syncDerivedFields } from './lib/publication'
 import type { GithubSettings, Publication, PublicationKey } from './types'
@@ -244,6 +246,7 @@ export default function App() {
     setFileSha(null)
     setDirty(false)
     setSelectedIds(new Set())
+    clearPdfPreviewCache()
     toast('已锁定，数据已从页面清除')
   }
 
@@ -332,7 +335,7 @@ export default function App() {
         onDownloadFullPdfs={async () => {
           if (!selectedPublications.length) return
           try {
-            const r = await downloadPdfZip(selectedPublications, 'full', 'pdfs-full.zip')
+            const r = await downloadPdfZip(selectedPublications, 'full', 'pdfs-full.zip', settings)
             toast(`全文 PDF：成功 ${r.ok}，缺失 ${r.missing}`)
           } catch (err) {
             toast(err instanceof Error ? err.message : '下载失败')
@@ -341,7 +344,7 @@ export default function App() {
         onDownloadFirstPdfs={async () => {
           if (!selectedPublications.length) return
           try {
-            const r = await downloadPdfZip(selectedPublications, 'first', 'pdfs-first.zip')
+            const r = await downloadPdfZip(selectedPublications, 'first', 'pdfs-first.zip', settings)
             toast(`首页 PDF：成功 ${r.ok}，缺失 ${r.missing}`)
           } catch (err) {
             toast(err instanceof Error ? err.message : '下载失败')
@@ -387,6 +390,38 @@ export default function App() {
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
+          onOpenPdf={(pub, kind) => {
+            const path = kind === 'full' ? pub.pdfFull : pub.pdfFirst
+            const fallback = pub.online || pub.pubmed
+            const tab = window.open('about:blank', '_blank')
+            toast('正在打开…')
+            void (async () => {
+              try {
+                const tempUrl = path ? await createPdfTempUrl(settings, path) : null
+                if (tempUrl) {
+                  if (tab) tab.location.replace(tempUrl)
+                  else window.open(tempUrl, '_blank', 'noopener,noreferrer')
+                  toast('已打开临时 PDF 预览')
+                  return
+                }
+              } catch (err) {
+                toast(err instanceof Error ? err.message : '拉取 PDF 失败')
+              }
+              try {
+                const u = new URL(fallback)
+                if (u.protocol === 'http:' || u.protocol === 'https:') {
+                  if (tab) tab.location.replace(u.href)
+                  else window.open(u.href, '_blank', 'noopener,noreferrer')
+                  toast('仓库中还没有 PDF，已打开论文 online 链接')
+                  return
+                }
+              } catch {
+                /* ignore */
+              }
+              tab?.close()
+              toast('未找到 PDF。请把文件推到仓库 public/paper/ 或 paper/，或填写论文 online 链接')
+            })()
+          }}
         />
       )}
 

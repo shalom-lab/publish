@@ -45,12 +45,21 @@ npm run dev
 
 ## PDF
 
-放入 `public/paper/`（静态可访问，勿放不宜公开的全文时可改私有存储）：
+站点 **不会** 从 GitHub Pages 直接打开 PDF（`public/paper` 目前是空的，Pages 上会 404）。
+
+点击「全文 / 首页」时：用 Token 从仓库读取文件，生成浏览器临时预览地址（blob URL）。文件可放在：
+
+- `public/paper/`（会随 Pages 部署，公开可见）
+- 或仓库根目录 `paper/`（不进 Pages，仅 Token 可预览）
+
+命名：
 
 ```text
 {第一作者}_{发表年份}_{杂志名}_{标题截断}__full.pdf
 {第一作者}_{发表年份}_{杂志名}_{标题截断}__first.pdf
 ```
+
+仓库里还没有对应文件时，会改为打开该篇的 **论文 online 链接**（DOI）。
 
 ## 脚本
 

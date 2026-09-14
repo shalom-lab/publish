@@ -64,7 +64,6 @@ export function Toolbar({
         >
           {allSelected ? '取消全选' : '全部选中'}
         </button>
-        <span className="select-count">{hasSelection ? `已选 ${selectedCount}` : '未选中'}</span>
         <button type="button" className="btn secondary" onClick={onCopyCsv} disabled={!hasSelection}>
           复制 CSV
         </button>
@@ -81,7 +80,10 @@ export function Toolbar({
           下载 RIS
         </button>
       </div>
-      <ColumnToggle columns={columns} visible={visible} onToggle={onToggleColumn} />
+      <div className="toolbar-group toolbar-end">
+        <span className="select-count">{hasSelection ? `已选 ${selectedCount} / ${totalCount}` : `已选 0 / ${totalCount}`}</span>
+        <ColumnToggle columns={columns} visible={visible} onToggle={onToggleColumn} />
+      </div>
     </div>
   )
 }

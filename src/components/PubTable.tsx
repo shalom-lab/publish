@@ -2,7 +2,6 @@ import type { MouseEvent } from 'react'
 import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
 import { downloadRis } from '../lib/export'
-import { assetUrl } from '../lib/pdfName'
 import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
 
@@ -20,6 +19,7 @@ interface Props {
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onToggleSelectAll: () => void
+  onOpenPdf: (pub: Publication, kind: 'full' | 'first') => void
 }
 
 function cellText(pub: Publication, key: PublicationKey): string {
@@ -38,25 +38,6 @@ function safeHttpUrl(url: string): string | null {
     /* ignore */
   }
   return null
-}
-
-async function openPdfOrToast(relativePath: string): Promise<void> {
-  const url = assetUrl(relativePath)
-  try {
-    const res = await fetch(url, { method: 'HEAD' })
-    if (!res.ok) {
-      // 部分静态托管对 HEAD 不友好，再试 GET 前几个字节
-      const get = await fetch(url, { method: 'GET' })
-      if (!get.ok) {
-        const name = relativePath.split('/').pop() || relativePath
-        toast(`PDF 未找到（404）。请将文件放入 public/paper/：${name}`)
-        return
-      }
-    }
-    window.open(url, '_blank', 'noopener,noreferrer')
-  } catch {
-    toast('无法打开 PDF，请检查网络或文件是否已上传')
-  }
 }
 
 function TruncCell({
@@ -92,6 +73,7 @@ export function PubTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  onOpenPdf,
 }: Props) {
   const cols = columns.filter((c) => visible.has(c.key))
   const allSelected = publications.length > 0 && publications.every((p) => selectedIds.has(p.id))
@@ -218,7 +200,7 @@ export function PubTable({
                             type="button"
                             className="text-link btn-link"
                             title={`打开：${text}`}
-                            onClick={() => void openPdfOrToast(text)}
+                            onClick={() => onOpenPdf(pub, c.key === 'pdfFull' ? 'full' : 'first')}
                           >
                             {label}
                           </button>

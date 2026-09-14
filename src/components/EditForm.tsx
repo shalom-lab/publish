@@ -216,7 +216,11 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
           </label>
           <label className="full">
             全文 PDF 路径
-            <input value={form.pdfFull} onChange={(e) => set('pdfFull', e.target.value)} />
+            <input
+              value={form.pdfFull}
+              onChange={(e) => set('pdfFull', e.target.value)}
+              placeholder="paper/作者_年_杂志_标题__full.pdf"
+            />
           </label>
           <label className="full">
             首页 PDF 路径
