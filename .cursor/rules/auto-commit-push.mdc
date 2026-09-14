@@ -1,0 +1,10 @@
+---
+description: Deliverable changes should be committed and pushed unless the user says otherwise
+alwaysApply: true
+---
+
+# Git 默认推送
+
+用户未明确说「先别提交 / 不要 push」时：交付级改动做完后直接 `git commit` 并 `git push origin HEAD`。不要再口头提醒「要不要提交」。
+
+不要提交明显无关或未入库的文件（例如根目录散落的未匹配 PDF、密钥、`.env`）。
