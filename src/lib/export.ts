@@ -9,6 +9,7 @@ export function exportExcel(publications: Publication[], filename = 'publication
   const rows = publications.map((p) => {
     const row: Record<string, string | number | boolean> = {}
     for (const col of COLUMNS) {
+      if (col.key === 'ris' || col.key === 'id') continue
       const v = p[col.key]
       if (col.key === 'coFirst' || col.key === 'isFirstAuthor' || col.key === 'isCorresponding') {
         row[col.label] = v ? '是' : '否'
@@ -37,12 +38,11 @@ function cellForCsv(pub: Publication, key: (typeof COLUMNS)[number]['key']): str
   return String(v)
 }
 
-/** 标准 CSV：逗号分隔、必要时双引号转义，首行为表头。 */
+/** 标准 CSV：逗号分隔、必要时双引号转义，首行为表头。不含 RIS。 */
 export function publicationsToCsv(publications: Publication[]): string {
-  const header = COLUMNS.map((c) => csvEscape(c.label)).join(',')
-  const lines = publications.map((p) =>
-    COLUMNS.map((c) => csvEscape(cellForCsv(p, c.key))).join(','),
-  )
+  const cols = COLUMNS.filter((c) => c.key !== 'ris' && c.key !== 'id')
+  const header = cols.map((c) => csvEscape(c.label)).join(',')
+  const lines = publications.map((p) => cols.map((c) => csvEscape(cellForCsv(p, c.key))).join(','))
   return [header, ...lines].join('\r\n')
 }
 

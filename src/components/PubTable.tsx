@@ -35,6 +35,25 @@ function safeHttpUrl(url: string): string | null {
   return null
 }
 
+async function openPdfOrToast(relativePath: string): Promise<void> {
+  const url = assetUrl(relativePath)
+  try {
+    const res = await fetch(url, { method: 'HEAD' })
+    if (!res.ok) {
+      // 部分静态托管对 HEAD 不友好，再试 GET 前几个字节
+      const get = await fetch(url, { method: 'GET' })
+      if (!get.ok) {
+        const name = relativePath.split('/').pop() || relativePath
+        toast(`PDF 未找到（404）。请将文件放入 public/paper/：${name}`)
+        return
+      }
+    }
+    window.open(url, '_blank', 'noopener,noreferrer')
+  } catch {
+    toast('无法打开 PDF，请检查网络或文件是否已上传')
+  }
+}
+
 function TruncCell({
   text,
   onCopy,
@@ -71,7 +90,7 @@ export function PubTable({
   const onCopy = async (text: string, e?: MouseEvent) => {
     e?.stopPropagation()
     const ok = await copyText(text)
-    toast(ok ? '已复制' : '复制失败')
+    toast(ok ? '复制成功' : '复制失败')
   }
 
   return (
@@ -159,21 +178,20 @@ export function PubTable({
                     <td key={c.key}>
                       {text ? (
                         <div className="link-cell">
-                          <a
-                            className="text-link"
-                            href={assetUrl(text)}
-                            target="_blank"
-                            rel="noreferrer"
-                            title={`在新标签页打开：${text}`}
+                          <button
+                            type="button"
+                            className="text-link btn-link"
+                            title={`打开：${text}`}
+                            onClick={() => void openPdfOrToast(text)}
                           >
                             {label}
-                          </a>
+                          </button>
                           <button type="button" className="btn tiny" onClick={(e) => onCopy(text, e)}>
                             路径
                           </button>
                         </div>
                       ) : (
-                        <span className="muted pad">—</span>
+                        <span className="muted pad">未上传</span>
                       )}
                     </td>
                   )

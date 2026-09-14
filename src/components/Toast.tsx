@@ -21,7 +21,7 @@ export function ToastHost(): ReactNode {
       setItems((prev) => [...prev, { id, message }])
       window.setTimeout(() => {
         setItems((prev) => prev.filter((t) => t.id !== id))
-      }, 2200)
+      }, 2800)
     }
     return () => {
       pushToast = null

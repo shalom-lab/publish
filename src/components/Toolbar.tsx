@@ -6,7 +6,6 @@ interface Props {
   visible: Set<PublicationKey>
   onToggleColumn: (key: PublicationKey) => void
   onAdd: () => void
-  onOpenSettings: () => void
   onSaveRemote: () => void
   onExportExcel: () => void
   onCopyAllCsv: () => void
@@ -22,7 +21,6 @@ export function Toolbar({
   visible,
   onToggleColumn,
   onAdd,
-  onOpenSettings,
   onSaveRemote,
   onExportExcel,
   onCopyAllCsv,
@@ -45,9 +43,6 @@ export function Toolbar({
           disabled={!canSave || saving}
         >
           {saving ? '保存中…' : '保存到 GitHub'}
-        </button>
-        <button type="button" className="btn ghost" onClick={onOpenSettings}>
-          BYOK 设置
         </button>
       </div>
       <div className="toolbar-group">

@@ -8,6 +8,7 @@ import type { SortDir } from './components/PubTable'
 import { SettingsModal } from './components/SettingsModal'
 import { ToastHost, toast } from './components/Toast'
 import { Toolbar } from './components/Toolbar'
+import { TopBar } from './components/TopBar'
 import { COLUMNS } from './lib/columns'
 import {
   downloadAllRis,
@@ -211,6 +212,7 @@ export default function App() {
   if (!unlocked) {
     return (
       <div className="app">
+        <TopBar settings={settings} onOpenSettings={() => setSettingsOpen(true)} />
         <AuthGate
           settings={settings}
           onUnlocked={(s) => {
@@ -235,6 +237,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <TopBar settings={settings} onOpenSettings={() => setSettingsOpen(true)} />
       <header className="hero">
         <div>
           <p className="eyebrow">Publication Manager · BYOK</p>
@@ -266,7 +269,6 @@ export default function App() {
           setEditing(createEmptyPublication())
           setEditOpen(true)
         }}
-        onOpenSettings={() => setSettingsOpen(true)}
         onSaveRemote={handleSaveRemote}
         onExportExcel={() => {
           exportExcel(sortedPublications)
@@ -275,7 +277,7 @@ export default function App() {
         onCopyAllCsv={async () => {
           const csv = publicationsToCsv(sortedPublications)
           const ok = await copyText(csv)
-          toast(ok ? `已复制 ${sortedPublications.length} 条 CSV` : '复制失败')
+          toast(ok ? '复制成功' : '复制失败')
         }}
         onDownloadFullPdfs={async () => {
           try {
