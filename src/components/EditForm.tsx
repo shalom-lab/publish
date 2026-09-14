@@ -203,11 +203,11 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             />
           </label>
           <label className="full">
-            Pubmed链接
+            Pubmed
             <input value={form.pubmed} onChange={(e) => set('pubmed', e.target.value)} />
           </label>
           <label className="full">
-            论文online链接
+            在线链接
             <input
               value={form.online}
               onChange={(e) => set('online', e.target.value)}

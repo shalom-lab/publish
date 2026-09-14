@@ -175,7 +175,7 @@ export function PubTable({
                       <div className="link-cell">
                         {href ? (
                           <a className="text-link" href={href} target="_blank" rel="noreferrer" title={text}>
-                            {c.key === 'pubmed' ? 'Pubmed' : 'Online'}
+                            {c.key === 'pubmed' ? 'Pubmed' : '在线'}
                           </a>
                         ) : (
                           <span className="muted">—</span>
