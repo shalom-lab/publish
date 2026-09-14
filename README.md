@@ -43,18 +43,28 @@ npm run dev
 
 解锁后可「保存到 GitHub」。退出请到右上角设置里「清除 Token」（会同时清空页面数据）。
 
-## PDF
+## PDF（Pages 静态预览）
 
-仓库里目前 **没有** 上传 PDF 文件。表格里的「全文 / 首页」会直接打开该篇的 **DOI / Pubmed**（和「在线链接」同类，用浏览器原生跳转，避免弹窗拦截）。
+「全文 / 首页」是普通链接，指向站点上的静态文件，例如：
 
-若以后要把本地 PDF 放进仓库，命名如下，放到 `public/paper/` 或 `paper/`：
+`https://shalom-lab.github.io/publish/paper/xxx__full.pdf`
+
+浏览器会用内置 PDF 阅读器预览（与 BYOK 无关）。文件必须放在 **`public/paper/`** 并推送到仓库，才会进入 Pages 构建产物。
+
+命名：
 
 ```text
 {第一作者}_{发表年份}_{杂志名}_{标题截断}__full.pdf
 {第一作者}_{发表年份}_{杂志名}_{标题截断}__first.pdf
 ```
 
-仓库里还没有对应文件时，会改为打开该篇的 **论文 online 链接**（DOI）。
+对照文件名：
+
+```bash
+npx tsx scripts/list-pdf-names.mts
+```
+
+仓库根目录已有 `.nojekyll`（随 `public/` 发布），避免 Jekyll 过滤路径。
 
 ## 脚本
 

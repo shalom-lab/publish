@@ -24,7 +24,6 @@ import {
   savePublicationsJson,
   saveSettings,
   writeToken,
-  clearPdfPreviewCache,
 } from './lib/github'
 import { createEmptyPublication, dateSortKey, lastAuthor, splitPubmedAndOnline, defaultFirstAuthorRank, syncDerivedFields } from './lib/publication'
 import type { GithubSettings, Publication, PublicationKey } from './types'
@@ -245,7 +244,6 @@ export default function App() {
     setFileSha(null)
     setDirty(false)
     setSelectedIds(new Set())
-    clearPdfPreviewCache()
     toast('已清除 Token，页面数据已清空')
   }
 

@@ -2,7 +2,8 @@ import type { MouseEvent } from 'react'
 import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
 import { downloadRis } from '../lib/export'
-import { paperViewUrl, rankDisplay } from '../lib/publication'
+import { assetUrl } from '../lib/pdfName'
+import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
 
 export type SortDir = 'asc' | 'desc'
@@ -184,14 +185,19 @@ export function PubTable({
                 }
 
                 if (c.key === 'pdfFull' || c.key === 'pdfFirst') {
-                  const kind = c.key === 'pdfFull' ? 'full' : 'first'
-                  const href = safeHttpUrl(paperViewUrl(pub, kind))
-                  const label = kind === 'full' ? '全文' : '首页'
+                  const label = c.key === 'pdfFull' ? '全文' : '首页'
+                  const href = text ? assetUrl(text) : ''
                   return (
                     <td key={c.key}>
                       <div className="link-cell">
                         {href ? (
-                          <a className="text-link" href={href} target="_blank" rel="noreferrer" title={href}>
+                          <a
+                            className="text-link"
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={text}
+                          >
                             {label}
                           </a>
                         ) : (

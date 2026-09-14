@@ -180,26 +180,6 @@ export async function fetchPdfFromRepo(
   return null
 }
 
-const previewUrls = new Map<string, string>()
-
-export function clearPdfPreviewCache(): void {
-  for (const url of previewUrls.values()) URL.revokeObjectURL(url)
-  previewUrls.clear()
-}
-
-export async function createPdfTempUrl(
-  settings: GithubSettings,
-  relativePath: string,
-): Promise<string | null> {
-  const blob = await fetchPdfFromRepo(settings, relativePath)
-  if (!blob) return null
-  const prev = previewUrls.get(relativePath)
-  if (prev) URL.revokeObjectURL(prev)
-  const url = URL.createObjectURL(blob)
-  previewUrls.set(relativePath, url)
-  return url
-}
-
 export async function loadPublicationsJson(
   settings: GithubSettings,
 ): Promise<{ publications: unknown; sha: string }> {

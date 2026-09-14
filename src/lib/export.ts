@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import type { GithubSettings, Publication } from '../types'
 import { COLUMNS } from './columns'
 import { fetchPdfFromRepo } from './github'
+import { assetUrl } from './pdfName'
 import { rankDisplay } from './publication'
 
 export function exportExcel(publications: Publication[], filename = 'publications.xlsx'): void {
@@ -50,11 +51,29 @@ export function publicationsToCsv(publications: Publication[]): string {
   return [header, ...lines].join('\r\n')
 }
 
+async function fetchPdfBlob(
+  relativePath: string,
+  settings?: GithubSettings,
+): Promise<Blob | null> {
+  if (!relativePath) return null
+  try {
+    const res = await fetch(assetUrl(relativePath))
+    if (res.ok) {
+      const blob = await res.blob()
+      if (blob.size > 0) return blob
+    }
+  } catch {
+    /* Pages 上没有该静态文件时再试仓库 API */
+  }
+  if (settings?.token) return fetchPdfFromRepo(settings, relativePath)
+  return null
+}
+
 export async function downloadPdfZip(
   publications: Publication[],
   kind: 'full' | 'first',
   zipName: string,
-  settings: GithubSettings,
+  settings?: GithubSettings,
 ): Promise<{ ok: number; missing: number }> {
   const zip = new JSZip()
   let ok = 0
@@ -65,7 +84,7 @@ export async function downloadPdfZip(
       missing++
       continue
     }
-    const blob = await fetchPdfFromRepo(settings, path)
+    const blob = await fetchPdfBlob(path, settings)
     if (!blob) {
       missing++
       continue
@@ -75,7 +94,7 @@ export async function downloadPdfZip(
     ok++
   }
   if (ok === 0) {
-    throw new Error('仓库里没有可打包的 PDF。请把文件放到 public/paper/ 或 paper/ 后推送到 GitHub')
+    throw new Error('没有可打包的 PDF。请把文件放到 public/paper/ 并推送后，Pages 上即可预览与下载')
   }
   const content = await zip.generateAsync({ type: 'blob' })
   saveAs(content, zipName)
