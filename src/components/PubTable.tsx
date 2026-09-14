@@ -3,6 +3,7 @@ import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
 import { downloadRis } from '../lib/export'
 import { assetUrl } from '../lib/pdfName'
+import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
 
 export type SortDir = 'asc' | 'desc'
@@ -21,6 +22,7 @@ interface Props {
 function cellText(pub: Publication, key: PublicationKey): string {
   const v = pub[key]
   if (key === 'coFirst' || key === 'isFirstAuthor' || key === 'isCorresponding') return v ? '是' : '否'
+  if (key === 'rank') return rankDisplay(pub)
   if (v === null || v === undefined) return ''
   return String(v)
 }
@@ -101,7 +103,13 @@ export function PubTable({
             <th className="sticky-col actions-col">操作</th>
             {cols.map((c) => {
               const active = sortKey === c.key
-              const canSort = c.sortable !== false && c.key !== 'ris' && c.key !== 'pdfFull' && c.key !== 'pdfFirst' && c.key !== 'pubmed'
+              const canSort =
+                c.sortable !== false &&
+                c.key !== 'ris' &&
+                c.key !== 'pdfFull' &&
+                c.key !== 'pdfFirst' &&
+                c.key !== 'pubmed' &&
+                c.key !== 'online'
               return (
                 <th key={c.key}>
                   {canSort ? (
@@ -150,14 +158,14 @@ export function PubTable({
               {cols.map((c) => {
                 const text = cellText(pub, c.key)
 
-                if (c.key === 'pubmed') {
+                if (c.key === 'pubmed' || c.key === 'online') {
                   const href = safeHttpUrl(text)
                   return (
                     <td key={c.key}>
                       <div className="link-cell">
                         {href ? (
                           <a className="text-link" href={href} target="_blank" rel="noreferrer" title={text}>
-                            打开
+                            {c.key === 'pubmed' ? 'Pubmed' : 'Online'}
                           </a>
                         ) : (
                           <span className="muted">—</span>
@@ -199,21 +207,15 @@ export function PubTable({
 
                 if (c.key === 'coFirst' || c.key === 'isFirstAuthor' || c.key === 'isCorresponding') {
                   const on = Boolean(pub[c.key])
-                  const chipClass =
-                    c.key === 'isCorresponding'
-                      ? 'chip chip-corr'
-                      : c.key === 'isFirstAuthor'
-                        ? 'chip chip-first'
-                        : 'chip chip-co'
                   return (
-                    <td key={c.key}>
+                    <td key={c.key} className="yesno-col">
                       <button
                         type="button"
-                        className="cell-btn trunc"
+                        className="cell-btn yesno"
                         title={text}
                         onClick={(e) => onCopy(text, e)}
                       >
-                        {on ? <span className={chipClass}>是</span> : <span className="muted">否</span>}
+                        <span className={`chip yesno ${on ? 'on' : 'off'}`}>{on ? '是' : '否'}</span>
                       </button>
                     </td>
                   )
@@ -249,20 +251,17 @@ export function PubTable({
                   )
                 }
 
-                if (c.key === 'rank') {
-                  const full =
-                    pub.rank != null
-                      ? `${pub.rank}${pub.totalAuthors != null ? `/${pub.totalAuthors}` : ''}`
-                      : ''
+                if (c.key === 'rank' || c.key === 'firstAuthorRank') {
+                  const full = c.key === 'rank' ? rankDisplay(pub) : text
                   return (
-                    <td key={c.key}>
+                    <td key={c.key} className="yesno-col">
                       <button
                         type="button"
-                        className="cell-btn trunc"
+                        className="cell-btn yesno"
                         title={full}
-                        onClick={(e) => onCopy(full || text, e)}
+                        onClick={(e) => onCopy(full, e)}
                       >
-                        {full || <span className="muted">—</span>}
+                        {full ? <span className="chip chip-rank">{full}</span> : <span className="muted">—</span>}
                       </button>
                     </td>
                   )

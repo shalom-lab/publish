@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import type { Publication } from '../types'
 import { COLUMNS } from './columns'
 import { assetUrl } from './pdfName'
+import { rankDisplay } from './publication'
 
 export function exportExcel(publications: Publication[], filename = 'publications.xlsx'): void {
   const rows = publications.map((p) => {
@@ -13,6 +14,8 @@ export function exportExcel(publications: Publication[], filename = 'publication
       const v = p[col.key]
       if (col.key === 'coFirst' || col.key === 'isFirstAuthor' || col.key === 'isCorresponding') {
         row[col.label] = v ? '是' : '否'
+      } else if (col.key === 'rank') {
+        row[col.label] = rankDisplay(p)
       }
       else if (v === null || v === undefined) row[col.label] = ''
       else row[col.label] = v as string | number
@@ -34,6 +37,7 @@ function csvEscape(value: string): string {
 function cellForCsv(pub: Publication, key: (typeof COLUMNS)[number]['key']): string {
   const v = pub[key]
   if (key === 'coFirst' || key === 'isFirstAuthor' || key === 'isCorresponding') return v ? '是' : '否'
+  if (key === 'rank') return rankDisplay(pub)
   if (v === null || v === undefined) return ''
   return String(v)
 }

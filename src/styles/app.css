@@ -438,6 +438,29 @@ th.sticky-col { z-index: 6; }
 .chip-first { background: #e7f0ff; color: #2f5f9e; }
 .chip-corr { background: #fff3d6; color: #8a5a00; }
 
+.yesno-col {
+  text-align: center;
+  width: 5.5rem;
+}
+.cell-btn.yesno {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 6px 8px;
+}
+.chip.yesno {
+  min-width: 2rem;
+  justify-content: center;
+}
+.chip.yesno.on {
+  background: #e7f0ff;
+  color: #2f5f9e;
+}
+.chip.yesno.off {
+  background: #eef2f0;
+  color: #5a6b62;
+}
+
 .link-cell {
   display: flex;
   gap: 6px;

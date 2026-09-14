@@ -109,9 +109,50 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             <input
               type="checkbox"
               checked={form.isFirstAuthor}
-              onChange={(e) => set('isFirstAuthor', e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked
+                setForm((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        isFirstAuthor: checked,
+                        firstAuthorRank: checked
+                          ? prev.firstAuthorRank || (prev.coFirst ? '1/2' : '1/1')
+                          : '',
+                      }
+                    : prev,
+                )
+              }}
             />
             是否第一作者
+          </label>
+          <label className="check-label">
+            <input
+              type="checkbox"
+              checked={form.coFirst}
+              onChange={(e) => {
+                const checked = e.target.checked
+                setForm((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        coFirst: checked,
+                        isFirstAuthor: checked ? true : prev.isFirstAuthor,
+                        firstAuthorRank: checked ? prev.firstAuthorRank || '1/2' : prev.isFirstAuthor ? '1/1' : '',
+                      }
+                    : prev,
+                )
+              }}
+            />
+            是否共一
+          </label>
+          <label>
+            一作排名
+            <input
+              value={form.firstAuthorRank}
+              onChange={(e) => set('firstAuthorRank', e.target.value)}
+              placeholder="独一填 1/1，两人共一填 1/2"
+            />
           </label>
           <label className="check-label">
             <input
@@ -121,19 +162,12 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             />
             是否通讯作者
           </label>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={form.coFirst}
-              onChange={(e) => set('coFirst', e.target.checked)}
-            />
-            是否共一
-          </label>
           <label>
             通讯作者
             <input
               value={form.correspondingAuthor}
               onChange={(e) => set('correspondingAuthor', e.target.value)}
+              placeholder="一般为最后一位作者"
             />
           </label>
           <label>
@@ -146,13 +180,13 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             />
           </label>
           <label>
-            总人数
+            作者总数
             <input
               type="number"
               min={1}
-              value={form.totalAuthors ?? ''}
+              value={form.authorTotal ?? ''}
               onChange={(e) =>
-                set('totalAuthors', e.target.value === '' ? null : Number(e.target.value))
+                set('authorTotal', e.target.value === '' ? null : Number(e.target.value))
               }
             />
           </label>
@@ -169,8 +203,16 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             />
           </label>
           <label className="full">
-            Pubmed
+            Pubmed链接
             <input value={form.pubmed} onChange={(e) => set('pubmed', e.target.value)} />
+          </label>
+          <label className="full">
+            论文online链接
+            <input
+              value={form.online}
+              onChange={(e) => set('online', e.target.value)}
+              placeholder="https://doi.org/..."
+            />
           </label>
           <label className="full">
             全文 PDF 路径

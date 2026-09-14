@@ -42,7 +42,9 @@ export function generateRis(pub: Publication): string {
     const ep = pub.pages.split(/[-–—]/)[1]?.trim()
     if (ep) lines.push(`EP  - ${ep}`)
   }
-  if (pub.pubmed) lines.push(`UR  - ${pub.pubmed}`)
+  if (pub.online) lines.push(`UR  - ${pub.online}`)
+  else if (pub.pubmed) lines.push(`UR  - ${pub.pubmed}`)
+  if (pub.pubmed && pub.online) lines.push(`L1  - ${pub.pubmed}`)
   if (pub.impactFactor) lines.push(`N1  - Impact Factor: ${pub.impactFactor}`)
   if (pub.cas) lines.push(`N1  - CAS: ${pub.cas}`)
   lines.push('ER  - ')

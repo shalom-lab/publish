@@ -25,24 +25,39 @@ import {
   saveSettings,
   writeToken,
 } from './lib/github'
-import { createEmptyPublication, dateSortKey } from './lib/publication'
+import { createEmptyPublication, dateSortKey, lastAuthor, splitPubmedAndOnline, defaultFirstAuthorRank, syncDerivedFields } from './lib/publication'
 import type { GithubSettings, Publication, PublicationKey } from './types'
 import { DATA_PATH } from './types'
 
-function normalizePublication(raw: Publication): Publication {
+type LegacyPublication = Publication & { totalAuthors?: number | null }
+
+function normalizePublication(raw: LegacyPublication): Publication {
   const base = createEmptyPublication()
-  const date = (raw.date || '').replace(/^(\d{4})\/(\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2, '0')}`)
-  return {
+  const { totalAuthors: legacyTotal, ...rest } = raw
+  const date = (rest.date || '').replace(/^(\d{4})\/(\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2, '0')}`)
+  const authorTotal = rest.authorTotal ?? legacyTotal ?? null
+  const links = splitPubmedAndOnline(rest.pubmed || '', rest.online || '')
+  let correspondingAuthor = (rest.correspondingAuthor || '').trim()
+  if (!correspondingAuthor || /[;；,]/.test(correspondingAuthor)) {
+    correspondingAuthor = lastAuthor(rest.authors || '') || correspondingAuthor.split(/[;；,]/).pop()?.trim() || ''
+  }
+  const merged: Publication = {
     ...base,
-    ...raw,
+    ...rest,
     date,
+    authorTotal,
+    ...links,
+    correspondingAuthor,
     isFirstAuthor: raw.isFirstAuthor ?? raw.rank === 1,
     isCorresponding: raw.isCorresponding ?? false,
     coFirst: raw.coFirst ?? false,
     volume: raw.volume ?? '',
     issue: raw.issue ?? '',
     pages: raw.pages ?? '',
+    firstAuthorRank: raw.firstAuthorRank || '',
   }
+  merged.firstAuthorRank = defaultFirstAuthorRank(merged)
+  return syncDerivedFields(merged)
 }
 
 function defaultVisible(): Set<PublicationKey> {
@@ -56,7 +71,7 @@ function comparePubs(a: Publication, b: Publication, key: PublicationKey, dir: S
     const kb = dateSortKey(b.date, b.year)
     return mul * ka.localeCompare(kb)
   }
-  if (key === 'rank' || key === 'totalAuthors') {
+  if (key === 'rank' || key === 'authorTotal') {
     const na = a[key] ?? -1
     const nb = b[key] ?? -1
     return mul * (Number(na) - Number(nb))
