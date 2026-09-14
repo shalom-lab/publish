@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pdf:first": "tsx scripts/extract-first-page.mts"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
@@ -23,6 +24,7 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
+    "pdf-lib": "^1.17.1",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
   }
