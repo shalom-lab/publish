@@ -272,6 +272,13 @@ button, input, textarea { font: inherit; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
 .btn.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.05); }
+.btn.primary:disabled {
+  background: #b7c9be;
+  border-color: #b7c9be;
+  color: #f3f6f4;
+  opacity: 1;
+  filter: none;
+}
 .btn.secondary { background: var(--primary-soft); border-color: #cfe3d7; }
 .btn.ghost { background: transparent; }
 .btn.danger { color: var(--danger); border-color: #f0c7c2; }

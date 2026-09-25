@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Publication } from '../types'
 import { buildPdfPaths } from '../lib/pdfName'
@@ -14,10 +14,20 @@ interface Props {
 
 export function EditForm({ open, initial, onClose, onSave }: Props) {
   const [form, setForm] = useState<Publication | null>(null)
+  const [baseline, setBaseline] = useState<Publication | null>(null)
 
   useEffect(() => {
-    if (open && initial) setForm({ ...initial })
+    if (open && initial) {
+      const snap = { ...initial }
+      setForm(snap)
+      setBaseline(snap)
+    }
   }, [open, initial])
+
+  const dirty = useMemo(() => {
+    if (!form || !baseline) return false
+    return JSON.stringify(form) !== JSON.stringify(baseline)
+  }, [form, baseline])
 
   if (!open || !form) return null
 
@@ -36,6 +46,7 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    if (!dirty) return
     onSave(syncDerivedFields(form))
   }
 
@@ -242,8 +253,13 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
             <button type="button" className="btn ghost" onClick={onClose}>
               取消
             </button>
-            <button type="submit" className="btn primary">
-              保存
+            <button
+              type="submit"
+              className="btn primary"
+              disabled={!dirty}
+              title={dirty ? '保存修改' : '未修改，无需保存'}
+            >
+              {dirty ? '保存' : '未修改'}
             </button>
           </div>
         </form>
