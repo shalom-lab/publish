@@ -23,7 +23,6 @@ function isPublicationKey(key: string): key is PublicationKey {
 /** Sensible defaults so resize has a stable starting width. */
 export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   date: 78,
-  year: 56,
   title: 240,
   journal: 150,
   volume: 52,

@@ -1,8 +1,7 @@
 import type { ColumnDef } from '../types'
 
 export const COLUMNS: ColumnDef[] = [
-  { key: 'date', label: 'A-B', defaultVisible: true, sortable: true },
-  { key: 'year', label: '年份', defaultVisible: false, sortable: true },
+  { key: 'date', label: '年月', defaultVisible: true, sortable: true },
   { key: 'title', label: '题目', defaultVisible: true, sortable: true },
   { key: 'journal', label: '刊物', defaultVisible: true, sortable: true },
   { key: 'volume', label: '卷', defaultVisible: true, sortable: true },

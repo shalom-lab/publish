@@ -18,8 +18,8 @@
 | JSON key | 中文 | 类型 | 规则 |
 |----------|------|------|------|
 | `id` | ID | string | 稳定唯一。建议 `pub_{年}_{期刊缩写}_{主题词}`，如 `pub_2023_vaccine_rsv` |
-| `date` | A-B（发表年月） | string | **`YYYY-MM`**，如 `2023-11`。优先 online / print 发表月 |
-| `year` | 年份 | string | 四位年，如 `2023`，须与 `date` 一致 |
+| `date` | 年月 | string | **`YYYY-MM`**，如 `2023-11`。优先 online / print 发表月 |
+| `year` | 年份 | string | 由 `date` 派生（四位年）；写入时自动补齐，表格不再单独展示 |
 | `title` | 题目 | string | 论文正式标题，与原文一致 |
 | `journal` | 刊物 | string | 期刊全名（英文刊用英文官方名） |
 | `volume` | 卷 | string | 无则 `""` |

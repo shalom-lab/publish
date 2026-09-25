@@ -62,12 +62,8 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
         <form className="edit-form" onSubmit={submit}>
           <div className="form-grid edit-form-body">
             <label>
-              发表年月（A-B）
+              发表年月
               <input value={form.date} onChange={(e) => set('date', e.target.value)} placeholder="2023-11" />
-            </label>
-            <label>
-              发表年份
-              <input value={form.year} onChange={(e) => set('year', e.target.value)} placeholder="2023" />
             </label>
             <label className="full">
               论文题目
