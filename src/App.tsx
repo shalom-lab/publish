@@ -381,6 +381,7 @@ export default function App() {
         }}
         saving={saving}
         canSave={canSave}
+        dirty={dirty}
       />
 
       <div className="toolbar-extra">
