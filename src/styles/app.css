@@ -280,6 +280,12 @@ button, input, textarea { font: inherit; }
   filter: none;
 }
 .btn.secondary { background: var(--primary-soft); border-color: #cfe3d7; }
+.btn.secondary:disabled {
+  background: #eef2ef;
+  border-color: #d9e0dc;
+  color: #8a9690;
+  opacity: 1;
+}
 .btn.ghost { background: transparent; }
 .btn.danger { color: var(--danger); border-color: #f0c7c2; }
 .btn.tiny { padding: 2px 6px; font-size: 11px; }

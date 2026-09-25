@@ -17,6 +17,7 @@ interface Props {
   onSelectAll: () => void
   saving: boolean
   canSave: boolean
+  dirty: boolean
   selectedCount: number
   totalCount: number
 }
@@ -37,11 +38,20 @@ export function Toolbar({
   onSelectAll,
   saving,
   canSave,
+  dirty,
   selectedCount,
   totalCount,
 }: Props) {
   const hasSelection = selectedCount > 0
   const allSelected = totalCount > 0 && selectedCount === totalCount
+  const remoteDisabled = !canSave || saving || !dirty
+  const remoteTitle = !canSave
+    ? '请先配置 BYOK'
+    : saving
+      ? '正在写入 GitHub…'
+      : dirty
+        ? '将本地改动写入 GitHub'
+        : '没有未同步的改动'
 
   return (
     <div className="toolbar">
@@ -51,11 +61,12 @@ export function Toolbar({
         </button>
         <button
           type="button"
-          className="btn secondary"
+          className={`btn ${dirty ? 'primary' : 'secondary'}`}
           onClick={onSaveRemote}
-          disabled={!canSave || saving}
+          disabled={remoteDisabled}
+          title={remoteTitle}
         >
-          {saving ? '保存中…' : '保存到 GitHub'}
+          {saving ? '保存中…' : dirty ? '保存到 GitHub' : '已同步'}
         </button>
       </div>
       <div className="toolbar-group">
