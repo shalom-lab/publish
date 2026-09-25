@@ -1,7 +1,6 @@
 import type { MouseEvent } from 'react'
 import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
-import { downloadRis } from '../lib/export'
 import { assetUrl } from '../lib/pdfName'
 import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
@@ -144,36 +143,39 @@ export function PubTable({
               </td>
               <td className="sticky-col actions-col">
                 <div className="row-btns">
-                  <button type="button" className="btn tiny" onClick={() => onEdit(pub)}>
-                    编辑
+                  <button
+                    type="button"
+                    className="btn tiny icon-btn"
+                    onClick={() => onEdit(pub)}
+                    title="编辑"
+                    aria-label="编辑"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path
+                        d="M4 20h4.5L19 9.5 14.5 5 4 15.5V20z"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                      <path d="M12.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.8" />
+                    </svg>
                   </button>
                   <button
                     type="button"
-                    className="btn tiny danger"
-                      onClick={() => onDelete(pub.id)}
-                    >
-                      删除
-                    </button>
-                  <button
-                    type="button"
-                    className="btn tiny"
-                    onClick={async () => {
-                      const ok = await copyText(pub.ris || '')
-                      toast(ok ? '复制成功' : '复制失败')
-                    }}
-                    disabled={!pub.ris}
-                    title="复制 RIS"
+                    className="btn tiny icon-btn danger"
+                    onClick={() => onDelete(pub.id)}
+                    title="删除"
+                    aria-label="删除"
                   >
-                    复制RIS
-                  </button>
-                  <button
-                    type="button"
-                    className="btn tiny"
-                    onClick={() => downloadRis(pub)}
-                    disabled={!pub.ris}
-                    title="下载 RIS"
-                  >
-                    下载RIS
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path
+                        d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
                 </div>
               </td>

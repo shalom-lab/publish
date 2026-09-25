@@ -410,7 +410,8 @@ td.select-col {
   accent-color: var(--primary);
 }
 .actions-col {
-  min-width: 168px;
+  min-width: 64px;
+  width: 64px;
   left: 36px;
 }
 .pub-table tbody tr.row-selected td { background: #eef6f1; }
@@ -485,9 +486,22 @@ td.select-col {
 .row-btns {
   display: flex;
   flex-wrap: nowrap;
-  gap: 3px;
-  padding: 4px 6px;
+  gap: 2px;
+  padding: 4px 4px;
   white-space: nowrap;
+  justify-content: center;
+}
+.btn.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 6px;
+}
+.btn.icon-btn svg {
+  display: block;
 }
 
 .chip {
