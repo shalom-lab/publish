@@ -4,7 +4,9 @@ import type { ColumnDef, PublicationKey } from '../types'
 interface Props {
   columns: ColumnDef[]
   visible: Set<PublicationKey>
+  pinned: Set<PublicationKey>
   onToggleColumn: (key: PublicationKey) => void
+  onTogglePin: (key: PublicationKey) => void
   onReorderColumns: (from: number, to: number) => void
   onAdd: () => void
   onSaveRemote: () => void
@@ -25,7 +27,9 @@ interface Props {
 export function Toolbar({
   columns,
   visible,
+  pinned,
   onToggleColumn,
+  onTogglePin,
   onReorderColumns,
   onAdd,
   onSaveRemote,
@@ -103,7 +107,9 @@ export function Toolbar({
         <ColumnToggle
           columns={columns}
           visible={visible}
+          pinned={pinned}
           onToggle={onToggleColumn}
+          onTogglePin={onTogglePin}
           onReorder={onReorderColumns}
         />
       </div>

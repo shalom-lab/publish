@@ -1,24 +1,37 @@
-import type { MouseEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, MouseEvent, ReactNode } from 'react'
 import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
+import { splitVisibleColumns } from '../lib/columnPrefs'
 import { assetUrl } from '../lib/pdfName'
 import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
 
 export type SortDir = 'asc' | 'desc'
 
+const SELECT_WIDTH = 36
+
 interface Props {
   publications: Publication[]
   columns: ColumnDef[]
   visible: Set<PublicationKey>
+  pinned: PublicationKey[]
   sortKey: PublicationKey
   sortDir: SortDir
   onSort: (key: PublicationKey) => void
+  onTogglePin: (key: PublicationKey) => void
   onEdit: (pub: Publication) => void
   onDelete: (id: string) => void
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onToggleSelectAll: () => void
+}
+
+interface HeaderMenu {
+  x: number
+  y: number
+  key: PublicationKey
+  label: string
 }
 
 function cellText(pub: Publication, key: PublicationKey): string {
@@ -60,22 +73,89 @@ function TruncCell({
   )
 }
 
+function EditIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 20h4.5L19 9.5 14.5 5 4 15.5V20z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M12.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function DeleteIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export function PubTable({
   publications,
   columns,
   visible,
+  pinned,
   sortKey,
   sortDir,
   onSort,
+  onTogglePin,
   onEdit,
   onDelete,
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
 }: Props) {
-  const cols = columns.filter((c) => visible.has(c.key))
+  const { pinnedCols, scrollCols } = useMemo(
+    () => splitVisibleColumns(columns, visible, pinned),
+    [columns, visible, pinned],
+  )
+  const allCols = useMemo(() => [...pinnedCols, ...scrollCols], [pinnedCols, scrollCols])
+  const pinSet = useMemo(() => new Set(pinned), [pinned])
+
   const allSelected = publications.length > 0 && publications.every((p) => selectedIds.has(p.id))
   const someSelected = publications.some((p) => selectedIds.has(p.id))
+
+  const [menu, setMenu] = useState<HeaderMenu | null>(null)
+  const [pinLefts, setPinLefts] = useState<Partial<Record<PublicationKey, number>>>({})
+  const headerRefs = useRef<Partial<Record<PublicationKey, HTMLTableCellElement | null>>>({})
+
+  useLayoutEffect(() => {
+    let left = SELECT_WIDTH
+    const next: Partial<Record<PublicationKey, number>> = {}
+    for (const col of pinnedCols) {
+      next[col.key] = left
+      const el = headerRefs.current[col.key]
+      left += el?.offsetWidth || (col.key === 'title' ? 240 : 120)
+    }
+    setPinLefts(next)
+  }, [pinnedCols, publications.length, visible])
+
+  useEffect(() => {
+    if (!menu) return
+    const close = () => setMenu(null)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+    }
+    window.addEventListener('click', close)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('click', close)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [menu])
 
   const onCopy = async (text: string, e?: MouseEvent) => {
     e?.stopPropagation()
@@ -83,12 +163,210 @@ export function PubTable({
     toast(ok ? '复制成功' : '复制失败')
   }
 
+  const renderDataCell = (c: ColumnDef, pub: Publication, sticky?: boolean): ReactNode => {
+    const text = cellText(pub, c.key)
+    const isLastPinned = sticky && pinnedCols.length > 0 && pinnedCols[pinnedCols.length - 1]?.key === c.key
+    const style: CSSProperties | undefined = sticky
+      ? { left: pinLefts[c.key] ?? SELECT_WIDTH }
+      : undefined
+    const className = [
+      sticky ? 'sticky-col sticky-left pinned-col' : '',
+      isLastPinned ? 'sticky-edge-left' : '',
+      c.key === 'title' ? 'col-title' : '',
+      c.key === 'rank' || c.key === 'firstAuthorRank' || c.key === 'coFirst' || c.key === 'isFirstAuthor' || c.key === 'isCorresponding'
+        ? 'yesno-col'
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    if (c.key === 'pubmed' || c.key === 'online') {
+      const href = safeHttpUrl(text)
+      return (
+        <td key={c.key} className={className || undefined} style={style}>
+          <div className="link-cell">
+            {href ? (
+              <a className="text-link" href={href} target="_blank" rel="noreferrer" title={text}>
+                {c.key === 'pubmed' ? 'Pubmed' : '在线'}
+              </a>
+            ) : (
+              <span className="muted">—</span>
+            )}
+          </div>
+        </td>
+      )
+    }
+
+    if (c.key === 'pdfFull' || c.key === 'pdfFirst') {
+      const label = c.key === 'pdfFull' ? '全文' : '首页'
+      const href = text ? assetUrl(text) : ''
+      return (
+        <td key={c.key} className={className || undefined} style={style}>
+          <div className="link-cell">
+            {href ? (
+              <a
+                className="text-link"
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={text}
+              >
+                {label}
+              </a>
+            ) : (
+              <span className="muted">—</span>
+            )}
+          </div>
+        </td>
+      )
+    }
+
+    if (c.key === 'coFirst' || c.key === 'isFirstAuthor' || c.key === 'isCorresponding') {
+      const on = Boolean(pub[c.key])
+      return (
+        <td key={c.key} className={className || 'yesno-col'} style={style}>
+          <button type="button" className="cell-btn yesno" title={text} onClick={(e) => onCopy(text, e)}>
+            <span className={`chip yesno ${on ? 'on' : 'off'}`}>{on ? '是' : '否'}</span>
+          </button>
+        </td>
+      )
+    }
+
+    if (c.key === 'cas' && text) {
+      return (
+        <td key={c.key} className={className || undefined} style={style}>
+          <button type="button" className="cell-btn trunc" title={text} onClick={(e) => onCopy(text, e)}>
+            <span className="chip chip-cas trunc-inner">{text}</span>
+          </button>
+        </td>
+      )
+    }
+
+    if (c.key === 'impactFactor') {
+      return (
+        <td key={c.key} className={className || undefined} style={style}>
+          <button
+            type="button"
+            className="cell-btn trunc"
+            title={text || '中文刊可不填 IF'}
+            onClick={(e) => onCopy(text, e)}
+          >
+            {text ? <span className="chip chip-if">IF {text}</span> : <span className="muted">—</span>}
+          </button>
+        </td>
+      )
+    }
+
+    if (c.key === 'rank' || c.key === 'firstAuthorRank') {
+      const full = c.key === 'rank' ? rankDisplay(pub) : text
+      return (
+        <td key={c.key} className={className || 'yesno-col'} style={style}>
+          <button type="button" className="cell-btn yesno" title={full} onClick={(e) => onCopy(full, e)}>
+            {full ? <span className="chip chip-rank">{full}</span> : <span className="muted">—</span>}
+          </button>
+        </td>
+      )
+    }
+
+    return (
+      <td key={c.key} className={className || undefined} style={style}>
+        <TruncCell text={text} onCopy={onCopy} className={c.key === 'title' ? 'title-cell' : ''} />
+      </td>
+    )
+  }
+
+  const renderHeader = (c: ColumnDef, sticky: boolean) => {
+    const active = sortKey === c.key
+    const canSort =
+      c.sortable !== false &&
+      c.key !== 'ris' &&
+      c.key !== 'pdfFull' &&
+      c.key !== 'pdfFirst' &&
+      c.key !== 'pubmed' &&
+      c.key !== 'online'
+    const isPinned = pinSet.has(c.key)
+    const isLastPinned = sticky && pinnedCols[pinnedCols.length - 1]?.key === c.key
+    const style: CSSProperties | undefined = sticky
+      ? { left: pinLefts[c.key] ?? SELECT_WIDTH }
+      : undefined
+
+    return (
+      <th
+        key={c.key}
+        ref={(el) => {
+          headerRefs.current[c.key] = el
+        }}
+        className={[
+          sticky ? 'sticky-col sticky-left pinned-col' : '',
+          isLastPinned ? 'sticky-edge-left' : '',
+          c.key === 'title' ? 'col-title' : '',
+        ]
+          .filter(Boolean)
+          .join(' ') || undefined}
+        style={style}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          setMenu({ x: e.clientX, y: e.clientY, key: c.key, label: c.label })
+        }}
+        title="左键排序 · 右键固定列"
+      >
+        <div className="th-inner">
+          {canSort ? (
+            <button
+              type="button"
+              className={`th-sort ${active ? 'active' : ''}`}
+              onClick={() => onSort(c.key)}
+            >
+              {isPinned && <span className="pin-mark" aria-hidden />}
+              {c.label}
+              <span className="sort-icon">{active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}</span>
+            </button>
+          ) : (
+            <span className="th-label">
+              {isPinned && <span className="pin-mark" aria-hidden />}
+              {c.label}
+            </span>
+          )}
+        </div>
+      </th>
+    )
+  }
+
+  const actionsHeader = (
+    <th className="sticky-col sticky-right actions-col sticky-edge-right">操作</th>
+  )
+
+  const actionsCell = (pub: Publication) => (
+    <td className="sticky-col sticky-right actions-col sticky-edge-right">
+      <div className="row-btns">
+        <button
+          type="button"
+          className="btn tiny icon-btn"
+          onClick={() => onEdit(pub)}
+          title="编辑"
+          aria-label="编辑"
+        >
+          <EditIcon />
+        </button>
+        <button
+          type="button"
+          className="btn tiny icon-btn danger"
+          onClick={() => onDelete(pub.id)}
+          title="删除"
+          aria-label="删除"
+        >
+          <DeleteIcon />
+        </button>
+      </div>
+    </td>
+  )
+
   return (
     <div className="table-wrap">
       <table className="pub-table">
         <thead>
           <tr>
-            <th className="sticky-col select-col">
+            <th className="sticky-col sticky-left select-col" style={{ left: 0 }}>
               <input
                 type="checkbox"
                 checked={allSelected}
@@ -100,40 +378,15 @@ export function PubTable({
                 aria-label={allSelected ? '取消全选' : '全部选中'}
               />
             </th>
-            <th className="sticky-col actions-col">操作</th>
-            {cols.map((c) => {
-              const active = sortKey === c.key
-              const canSort =
-                c.sortable !== false &&
-                c.key !== 'ris' &&
-                c.key !== 'pdfFull' &&
-                c.key !== 'pdfFirst' &&
-                c.key !== 'pubmed' &&
-                c.key !== 'online'
-              return (
-                <th key={c.key}>
-                  {canSort ? (
-                    <button
-                      type="button"
-                      className={`th-sort ${active ? 'active' : ''}`}
-                      onClick={() => onSort(c.key)}
-                      title="点击排序"
-                    >
-                      {c.label}
-                      <span className="sort-icon">{active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}</span>
-                    </button>
-                  ) : (
-                    c.label
-                  )}
-                </th>
-              )
-            })}
+            {pinnedCols.map((c) => renderHeader(c, true))}
+            {scrollCols.map((c) => renderHeader(c, false))}
+            {actionsHeader}
           </tr>
         </thead>
         <tbody>
           {publications.map((pub) => (
             <tr key={pub.id} className={selectedIds.has(pub.id) ? 'row-selected' : undefined}>
-              <td className="sticky-col select-col">
+              <td className="sticky-col sticky-left select-col" style={{ left: 0 }}>
                 <input
                   type="checkbox"
                   checked={selectedIds.has(pub.id)}
@@ -141,167 +394,41 @@ export function PubTable({
                   aria-label={`选中 ${pub.title || pub.id}`}
                 />
               </td>
-              <td className="sticky-col actions-col">
-                <div className="row-btns">
-                  <button
-                    type="button"
-                    className="btn tiny icon-btn"
-                    onClick={() => onEdit(pub)}
-                    title="编辑"
-                    aria-label="编辑"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <path
-                        d="M4 20h4.5L19 9.5 14.5 5 4 15.5V20z"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                      />
-                      <path d="M12.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.8" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn tiny icon-btn danger"
-                    onClick={() => onDelete(pub.id)}
-                    title="删除"
-                    aria-label="删除"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <path
-                        d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </td>
-              {cols.map((c) => {
-                const text = cellText(pub, c.key)
-
-                if (c.key === 'pubmed' || c.key === 'online') {
-                  const href = safeHttpUrl(text)
-                  return (
-                    <td key={c.key}>
-                      <div className="link-cell">
-                        {href ? (
-                          <a className="text-link" href={href} target="_blank" rel="noreferrer" title={text}>
-                            {c.key === 'pubmed' ? 'Pubmed' : '在线'}
-                          </a>
-                        ) : (
-                          <span className="muted">—</span>
-                        )}
-                      </div>
-                    </td>
-                  )
-                }
-
-                if (c.key === 'pdfFull' || c.key === 'pdfFirst') {
-                  const label = c.key === 'pdfFull' ? '全文' : '首页'
-                  const href = text ? assetUrl(text) : ''
-                  return (
-                    <td key={c.key}>
-                      <div className="link-cell">
-                        {href ? (
-                          <a
-                            className="text-link"
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={text}
-                          >
-                            {label}
-                          </a>
-                        ) : (
-                          <span className="muted">—</span>
-                        )}
-                      </div>
-                    </td>
-                  )
-                }
-
-                if (c.key === 'coFirst' || c.key === 'isFirstAuthor' || c.key === 'isCorresponding') {
-                  const on = Boolean(pub[c.key])
-                  return (
-                    <td key={c.key} className="yesno-col">
-                      <button
-                        type="button"
-                        className="cell-btn yesno"
-                        title={text}
-                        onClick={(e) => onCopy(text, e)}
-                      >
-                        <span className={`chip yesno ${on ? 'on' : 'off'}`}>{on ? '是' : '否'}</span>
-                      </button>
-                    </td>
-                  )
-                }
-
-                if (c.key === 'cas' && text) {
-                  return (
-                    <td key={c.key}>
-                      <button
-                        type="button"
-                        className="cell-btn trunc"
-                        title={text}
-                        onClick={(e) => onCopy(text, e)}
-                      >
-                        <span className="chip chip-cas trunc-inner">{text}</span>
-                      </button>
-                    </td>
-                  )
-                }
-
-                if (c.key === 'impactFactor') {
-                  return (
-                    <td key={c.key}>
-                      <button
-                        type="button"
-                        className="cell-btn trunc"
-                        title={text || '中文刊可不填 IF'}
-                        onClick={(e) => onCopy(text, e)}
-                      >
-                        {text ? <span className="chip chip-if">IF {text}</span> : <span className="muted">—</span>}
-                      </button>
-                    </td>
-                  )
-                }
-
-                if (c.key === 'rank' || c.key === 'firstAuthorRank') {
-                  const full = c.key === 'rank' ? rankDisplay(pub) : text
-                  return (
-                    <td key={c.key} className="yesno-col">
-                      <button
-                        type="button"
-                        className="cell-btn yesno"
-                        title={full}
-                        onClick={(e) => onCopy(full, e)}
-                      >
-                        {full ? <span className="chip chip-rank">{full}</span> : <span className="muted">—</span>}
-                      </button>
-                    </td>
-                  )
-                }
-
-                return (
-                  <td key={c.key} className={c.key === 'title' ? 'col-title' : undefined}>
-                    <TruncCell text={text} onCopy={onCopy} className={c.key === 'title' ? 'title-cell' : ''} />
-                  </td>
-                )
-              })}
+              {pinnedCols.map((c) => renderDataCell(c, pub, true))}
+              {scrollCols.map((c) => renderDataCell(c, pub, false))}
+              {actionsCell(pub)}
             </tr>
           ))}
           {!publications.length && (
             <tr>
-              <td colSpan={cols.length + 1} className="empty">
+              <td colSpan={allCols.length + 2} className="empty">
                 暂无记录，点击「新增」添加。
               </td>
             </tr>
           )}
         </tbody>
       </table>
+
+      {menu && (
+        <div
+          className="col-context-menu"
+          style={{ left: menu.x, top: menu.y }}
+          role="menu"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onTogglePin(menu.key)
+              setMenu(null)
+              toast(pinSet.has(menu.key) ? `已取消固定「${menu.label}」` : `已固定「${menu.label}」`)
+            }}
+          >
+            {pinSet.has(menu.key) ? `取消固定「${menu.label}」` : `固定「${menu.label}」列`}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

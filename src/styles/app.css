@@ -397,11 +397,18 @@ button, input, textarea { font: inherit; }
 
 .sticky-col {
   position: sticky;
-  left: 0;
   z-index: 4;
   background: #f8fbf9;
 }
 th.sticky-col { z-index: 6; }
+.sticky-left { left: 0; }
+.sticky-right { right: 0; left: auto; }
+.sticky-edge-left {
+  box-shadow: 4px 0 8px rgba(40, 70, 55, 0.06);
+}
+.sticky-edge-right {
+  box-shadow: -4px 0 8px rgba(40, 70, 55, 0.06);
+}
 .select-col {
   width: 36px;
   min-width: 36px;
@@ -425,8 +432,73 @@ td.select-col {
 .actions-col {
   min-width: 64px;
   width: 64px;
-  left: 36px;
+  right: 0;
+  left: auto;
 }
+.pinned-col.col-title,
+.col-title {
+  min-width: 200px;
+  max-width: 280px;
+}
+.th-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.th-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pin-mark {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+.col-context-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 160px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.col-context-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.col-context-menu button:hover {
+  background: var(--primary-soft);
+}
+.pin-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.pin-btn:hover { background: #eef2ef; color: var(--primary); }
+.pin-btn.on { color: var(--primary); }
 .pub-table tbody tr.row-selected td { background: #eef6f1; }
 .pub-table tbody tr.row-selected .sticky-col { background: #e4f0e9; }
 

@@ -96,7 +96,9 @@ export default function App() {
   const [visible, setVisible] = useState<Set<PublicationKey>>(() => {
     return new Set(loadColumnPrefs().visible)
   })
+  const [pinned, setPinned] = useState<PublicationKey[]>(() => loadColumnPrefs().pinned)
   const orderedColumns = useMemo(() => columnsInOrder(columnOrder), [columnOrder])
+  const pinnedSet = useMemo(() => new Set(pinned), [pinned])
   const [saving, setSaving] = useState(false)
   const [fileSha, setFileSha] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
@@ -179,16 +181,27 @@ export default function App() {
 
   const canSave = Boolean(settings.owner && settings.repo && settings.token && unlocked)
 
-  const persistColumnPrefs = useCallback((order: PublicationKey[], vis: Set<PublicationKey>) => {
-    saveColumnPrefs({ order, visible: [...vis] })
-  }, [])
+  const persistColumnPrefs = useCallback(
+    (order: PublicationKey[], vis: Set<PublicationKey>, pins: PublicationKey[]) => {
+      saveColumnPrefs({ order, visible: [...vis], pinned: pins })
+    },
+    [],
+  )
 
   const toggleColumn = (key: PublicationKey) => {
     setVisible((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
-      persistColumnPrefs(columnOrder, next)
+      persistColumnPrefs(columnOrder, next, pinned)
+      return next
+    })
+  }
+
+  const togglePin = (key: PublicationKey) => {
+    setPinned((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      persistColumnPrefs(columnOrder, visible, next)
       return next
     })
   }
@@ -199,7 +212,7 @@ export default function App() {
       const next = [...prev]
       const [item] = next.splice(from, 1)
       next.splice(to, 0, item)
-      persistColumnPrefs(next, visible)
+      persistColumnPrefs(next, visible, pinned)
       return next
     })
   }
@@ -325,7 +338,9 @@ export default function App() {
       <Toolbar
         columns={orderedColumns}
         visible={visible}
+        pinned={pinnedSet}
         onToggleColumn={toggleColumn}
+        onTogglePin={togglePin}
         onReorderColumns={reorderColumns}
         onAdd={() => {
           setEditing(createEmptyPublication())
@@ -394,7 +409,9 @@ export default function App() {
         <ColumnToggle
           columns={orderedColumns}
           visible={visible}
+          pinned={pinnedSet}
           onToggle={toggleColumn}
+          onTogglePin={togglePin}
           onReorder={reorderColumns}
         />
       </div>
@@ -406,9 +423,11 @@ export default function App() {
           publications={sortedPublications}
           columns={orderedColumns}
           visible={visible}
+          pinned={pinned}
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
+          onTogglePin={togglePin}
           onEdit={(pub) => {
             setEditing(pub)
             setEditOpen(true)
