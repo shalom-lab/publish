@@ -97,6 +97,7 @@ export default function App() {
     return new Set(loadColumnPrefs().visible)
   })
   const [pinned, setPinned] = useState<PublicationKey[]>(() => loadColumnPrefs().pinned)
+  const [widths, setWidths] = useState(() => loadColumnPrefs().widths)
   const orderedColumns = useMemo(() => columnsInOrder(columnOrder), [columnOrder])
   const pinnedSet = useMemo(() => new Set(pinned), [pinned])
   const [saving, setSaving] = useState(false)
@@ -182,8 +183,13 @@ export default function App() {
   const canSave = Boolean(settings.owner && settings.repo && settings.token && unlocked)
 
   const persistColumnPrefs = useCallback(
-    (order: PublicationKey[], vis: Set<PublicationKey>, pins: PublicationKey[]) => {
-      saveColumnPrefs({ order, visible: [...vis], pinned: pins })
+    (
+      order: PublicationKey[],
+      vis: Set<PublicationKey>,
+      pins: PublicationKey[],
+      nextWidths: typeof widths,
+    ) => {
+      saveColumnPrefs({ order, visible: [...vis], pinned: pins, widths: nextWidths })
     },
     [],
   )
@@ -193,7 +199,7 @@ export default function App() {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
-      persistColumnPrefs(columnOrder, next, pinned)
+      persistColumnPrefs(columnOrder, next, pinned, widths)
       return next
     })
   }
@@ -201,10 +207,21 @@ export default function App() {
   const togglePin = (key: PublicationKey) => {
     setPinned((prev) => {
       const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-      persistColumnPrefs(columnOrder, visible, next)
+      persistColumnPrefs(columnOrder, visible, next, widths)
       return next
     })
   }
+
+  const resizeColumn = useCallback(
+    (key: PublicationKey, width: number) => {
+      setWidths((prev) => {
+        const next = { ...prev, [key]: width }
+        persistColumnPrefs(columnOrder, visible, pinned, next)
+        return next
+      })
+    },
+    [columnOrder, visible, pinned, persistColumnPrefs],
+  )
 
   const reorderColumns = (from: number, to: number) => {
     setColumnOrder((prev) => {
@@ -212,7 +229,7 @@ export default function App() {
       const next = [...prev]
       const [item] = next.splice(from, 1)
       next.splice(to, 0, item)
-      persistColumnPrefs(next, visible, pinned)
+      persistColumnPrefs(next, visible, pinned, widths)
       return next
     })
   }
@@ -424,10 +441,12 @@ export default function App() {
           columns={orderedColumns}
           visible={visible}
           pinned={pinned}
+          widths={widths}
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
           onTogglePin={togglePin}
+          onResizeColumn={resizeColumn}
           onEdit={(pub) => {
             setEditing(pub)
             setEditOpen(true)

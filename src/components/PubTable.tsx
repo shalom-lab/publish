@@ -1,8 +1,13 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, MouseEvent, ReactNode } from 'react'
+import type { CSSProperties, MouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import type { ColumnDef, Publication, PublicationKey } from '../types'
 import { copyText } from '../lib/copy'
-import { splitVisibleColumns } from '../lib/columnPrefs'
+import {
+  clampColumnWidth,
+  DEFAULT_COLUMN_WIDTHS,
+  splitVisibleColumns,
+  type ColumnWidths,
+} from '../lib/columnPrefs'
 import { assetUrl } from '../lib/pdfName'
 import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
@@ -10,16 +15,19 @@ import { toast } from './Toast'
 export type SortDir = 'asc' | 'desc'
 
 const SELECT_WIDTH = 36
+const ACTIONS_WIDTH = 64
 
 interface Props {
   publications: Publication[]
   columns: ColumnDef[]
   visible: Set<PublicationKey>
   pinned: PublicationKey[]
+  widths: ColumnWidths
   sortKey: PublicationKey
   sortDir: SortDir
   onSort: (key: PublicationKey) => void
   onTogglePin: (key: PublicationKey) => void
+  onResizeColumn: (key: PublicationKey, width: number) => void
   onEdit: (pub: Publication) => void
   onDelete: (id: string) => void
   selectedIds: Set<string>
@@ -106,10 +114,12 @@ export function PubTable({
   columns,
   visible,
   pinned,
+  widths,
   sortKey,
   sortDir,
   onSort,
   onTogglePin,
+  onResizeColumn,
   onEdit,
   onDelete,
   selectedIds,
@@ -128,18 +138,31 @@ export function PubTable({
 
   const [menu, setMenu] = useState<HeaderMenu | null>(null)
   const [pinLefts, setPinLefts] = useState<Partial<Record<PublicationKey, number>>>({})
-  const headerRefs = useRef<Partial<Record<PublicationKey, HTMLTableCellElement | null>>>({})
+  const resizeRef = useRef<{ key: PublicationKey; startX: number; startW: number } | null>(null)
+
+  const colWidth = (key: PublicationKey): number =>
+    widths[key] ?? DEFAULT_COLUMN_WIDTHS[key] ?? 120
+
+  const colBoxStyle = (key: PublicationKey, sticky?: boolean): CSSProperties => {
+    const w = colWidth(key)
+    const style: CSSProperties = {
+      width: w,
+      minWidth: w,
+      maxWidth: w,
+    }
+    if (sticky) style.left = pinLefts[key] ?? SELECT_WIDTH
+    return style
+  }
 
   useLayoutEffect(() => {
     let left = SELECT_WIDTH
     const next: Partial<Record<PublicationKey, number>> = {}
     for (const col of pinnedCols) {
       next[col.key] = left
-      const el = headerRefs.current[col.key]
-      left += el?.offsetWidth || (col.key === 'title' ? 240 : 120)
+      left += widths[col.key] ?? DEFAULT_COLUMN_WIDTHS[col.key] ?? 120
     }
     setPinLefts(next)
-  }, [pinnedCols, publications.length, visible])
+  }, [pinnedCols, widths])
 
   useEffect(() => {
     if (!menu) return
@@ -157,6 +180,41 @@ export function PubTable({
     }
   }, [menu])
 
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const drag = resizeRef.current
+      if (!drag) return
+      const next = clampColumnWidth(drag.startW + (e.clientX - drag.startX))
+      onResizeColumn(drag.key, next)
+    }
+    const onUp = () => {
+      if (!resizeRef.current) return
+      resizeRef.current = null
+      document.body.classList.remove('col-resizing')
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+    }
+  }, [onResizeColumn])
+
+  const startResize = (key: PublicationKey, e: ReactPointerEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    resizeRef.current = { key, startX: e.clientX, startW: colWidth(key) }
+    document.body.classList.add('col-resizing')
+  }
+
+  const resetWidth = (key: PublicationKey, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onResizeColumn(key, DEFAULT_COLUMN_WIDTHS[key] ?? 120)
+  }
+
   const onCopy = async (text: string, e?: MouseEvent) => {
     e?.stopPropagation()
     const ok = await copyText(text)
@@ -166,9 +224,7 @@ export function PubTable({
   const renderDataCell = (c: ColumnDef, pub: Publication, sticky?: boolean): ReactNode => {
     const text = cellText(pub, c.key)
     const isLastPinned = sticky && pinnedCols.length > 0 && pinnedCols[pinnedCols.length - 1]?.key === c.key
-    const style: CSSProperties | undefined = sticky
-      ? { left: pinLefts[c.key] ?? SELECT_WIDTH }
-      : undefined
+    const style = colBoxStyle(c.key, sticky)
     const className = [
       sticky ? 'sticky-col sticky-left pinned-col' : '',
       isLastPinned ? 'sticky-edge-left' : '',
@@ -286,16 +342,11 @@ export function PubTable({
       c.key !== 'online'
     const isPinned = pinSet.has(c.key)
     const isLastPinned = sticky && pinnedCols[pinnedCols.length - 1]?.key === c.key
-    const style: CSSProperties | undefined = sticky
-      ? { left: pinLefts[c.key] ?? SELECT_WIDTH }
-      : undefined
+    const style = colBoxStyle(c.key, sticky)
 
     return (
       <th
         key={c.key}
-        ref={(el) => {
-          headerRefs.current[c.key] = el
-        }}
         className={[
           sticky ? 'sticky-col sticky-left pinned-col' : '',
           isLastPinned ? 'sticky-edge-left' : '',
@@ -308,7 +359,7 @@ export function PubTable({
           e.preventDefault()
           setMenu({ x: e.clientX, y: e.clientY, key: c.key, label: c.label })
         }}
-        title="左键排序 · 右键固定列"
+        title="左键排序 · 右键固定 · 右缘拖拽调宽"
       >
         <div className="th-inner">
           {canSort ? (
@@ -328,16 +379,30 @@ export function PubTable({
             </span>
           )}
         </div>
+        <span
+          className="col-resize-handle"
+          onPointerDown={(e) => startResize(c.key, e)}
+          onDoubleClick={(e) => resetWidth(c.key, e)}
+          title="拖拽调节列宽 · 双击恢复默认"
+        />
       </th>
     )
   }
 
   const actionsHeader = (
-    <th className="sticky-col sticky-right actions-col sticky-edge-right">操作</th>
+    <th
+      className="sticky-col sticky-right actions-col sticky-edge-right"
+      style={{ width: ACTIONS_WIDTH, minWidth: ACTIONS_WIDTH, maxWidth: ACTIONS_WIDTH }}
+    >
+      操作
+    </th>
   )
 
   const actionsCell = (pub: Publication) => (
-    <td className="sticky-col sticky-right actions-col sticky-edge-right">
+    <td
+      className="sticky-col sticky-right actions-col sticky-edge-right"
+      style={{ width: ACTIONS_WIDTH, minWidth: ACTIONS_WIDTH, maxWidth: ACTIONS_WIDTH }}
+    >
       <div className="row-btns">
         <button
           type="button"
@@ -364,9 +429,19 @@ export function PubTable({
   return (
     <div className="table-wrap">
       <table className="pub-table">
+        <colgroup>
+          <col style={{ width: SELECT_WIDTH }} />
+          {allCols.map((c) => (
+            <col key={c.key} style={{ width: colWidth(c.key) }} />
+          ))}
+          <col style={{ width: ACTIONS_WIDTH }} />
+        </colgroup>
         <thead>
           <tr>
-            <th className="sticky-col sticky-left select-col" style={{ left: 0 }}>
+            <th
+              className="sticky-col sticky-left select-col"
+              style={{ left: 0, width: SELECT_WIDTH, minWidth: SELECT_WIDTH, maxWidth: SELECT_WIDTH }}
+            >
               <input
                 type="checkbox"
                 checked={allSelected}
@@ -386,7 +461,10 @@ export function PubTable({
         <tbody>
           {publications.map((pub) => (
             <tr key={pub.id} className={selectedIds.has(pub.id) ? 'row-selected' : undefined}>
-              <td className="sticky-col sticky-left select-col" style={{ left: 0 }}>
+              <td
+                className="sticky-col sticky-left select-col"
+                style={{ left: 0, width: SELECT_WIDTH, minWidth: SELECT_WIDTH, maxWidth: SELECT_WIDTH }}
+              >
                 <input
                   type="checkbox"
                   checked={selectedIds.has(pub.id)}
@@ -426,6 +504,17 @@ export function PubTable({
             }}
           >
             {pinSet.has(menu.key) ? `取消固定「${menu.label}」` : `固定「${menu.label}」列`}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onResizeColumn(menu.key, DEFAULT_COLUMN_WIDTHS[menu.key] ?? 120)
+              setMenu(null)
+              toast(`已重置「${menu.label}」列宽`)
+            }}
+          >
+            重置「{menu.label}」列宽
           </button>
         </div>
       )}

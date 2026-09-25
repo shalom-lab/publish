@@ -390,6 +390,41 @@ button, input, textarea { font: inherit; }
   font-weight: 650;
   font-size: 11px;
   color: #3d5248;
+  box-sizing: border-box;
+}
+.pub-table td {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 8;
+}
+.col-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: 3px;
+  width: 1px;
+  background: transparent;
+}
+.pub-table th:hover .col-resize-handle::after,
+.col-resize-handle:hover::after {
+  background: var(--primary);
+}
+body.col-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+body.col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 .pub-table tbody tr:hover td { background: #f7fbf8; }
@@ -434,11 +469,6 @@ td.select-col {
   width: 64px;
   right: 0;
   left: auto;
-}
-.pinned-col.col-title,
-.col-title {
-  min-width: 200px;
-  max-width: 280px;
 }
 .th-inner {
   display: flex;

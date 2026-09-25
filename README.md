@@ -125,7 +125,7 @@ public/paper/{basename}__first.pdf
 - JSON 只放在 `data/`，**不**进 `public/`，避免随 Pages 裸奔。  
 - Token 保存在 `localStorage['gh-token-publish']`，也可由扩展/脚本预先注入；需 Contents 读写权限。设置页可改 owner/repo/分支；「清除 Token」会退出并清空页面上的论文，需重新粘贴才能查看。  
 - **请勿截图或分享含 Token 的界面。**  
-- 表格列显隐、顺序与固定列保存在 `localStorage['publish-column-prefs']`（表头右键或「列显隐」图钉可固定左列，默认固定题目；操作列在右侧）。  
+- 表格列显隐、顺序、固定列与列宽保存在 `localStorage['publish-column-prefs']`（表头右键固定/重置列宽；表头右缘拖拽调宽；默认固定题目；操作列在右侧）。  
 - 仓库若为 public，他人仍可能通过 GitHub 网页看到 `data/publications.json`。
 
 ```js
