@@ -52,210 +52,212 @@ export function EditForm({ open, initial, onClose, onSave }: Props) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" onClick={(e) => e.stopPropagation()}>
+      <div className="modal wide edit-modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
           <h2>{initial?.title ? '编辑论文' : '新增论文'}</h2>
           <button type="button" className="btn ghost" onClick={onClose}>
             关闭
           </button>
         </header>
-        <form className="form-grid" onSubmit={submit}>
-          <label>
-            发表年月（A-B）
-            <input value={form.date} onChange={(e) => set('date', e.target.value)} placeholder="2023-11" />
-          </label>
-          <label>
-            发表年份
-            <input value={form.year} onChange={(e) => set('year', e.target.value)} placeholder="2023" />
-          </label>
-          <label className="full">
-            论文题目
-            <input value={form.title} onChange={(e) => set('title', e.target.value)} required />
-          </label>
-          <label>
-            刊物名称
-            <input value={form.journal} onChange={(e) => set('journal', e.target.value)} />
-          </label>
-          <label>
-            卷
-            <input value={form.volume} onChange={(e) => set('volume', e.target.value)} placeholder="42" />
-          </label>
-          <label>
-            期
-            <input value={form.issue} onChange={(e) => set('issue', e.target.value)} placeholder="2" />
-          </label>
-          <label>
-            页码
-            <input value={form.pages} onChange={(e) => set('pages', e.target.value)} placeholder="352-361" />
-          </label>
-          <label>
-            当年影响因子
-            <input
-              value={form.impactFactor}
-              onChange={(e) => set('impactFactor', e.target.value)}
-              placeholder="中文刊可留空"
-            />
-          </label>
-          <label>
-            中科院分区
-            <input value={form.cas} onChange={(e) => set('cas', e.target.value)} placeholder="如 医学3区" />
-          </label>
-          <label>
-            收录情况
-            <input value={form.indexing} onChange={(e) => set('indexing', e.target.value)} placeholder="SCI收录" />
-          </label>
-          <label>
-            第一作者
-            <input value={form.firstAuthor} onChange={(e) => set('firstAuthor', e.target.value)} />
-          </label>
-          <label className="full">
-            全部作者
-            <textarea
-              rows={2}
-              value={form.authors}
-              onChange={(e) => set('authors', e.target.value)}
-            />
-          </label>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={form.isFirstAuthor}
-              onChange={(e) => {
-                const checked = e.target.checked
-                setForm((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        isFirstAuthor: checked,
-                        firstAuthorRank: checked
-                          ? prev.firstAuthorRank || (prev.coFirst ? '1/2' : '1/1')
-                          : '',
-                      }
-                    : prev,
-                )
-              }}
-            />
-            是否第一作者
-          </label>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={form.coFirst}
-              onChange={(e) => {
-                const checked = e.target.checked
-                setForm((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        coFirst: checked,
-                        isFirstAuthor: checked ? true : prev.isFirstAuthor,
-                        firstAuthorRank: checked ? prev.firstAuthorRank || '1/2' : prev.isFirstAuthor ? '1/1' : '',
-                      }
-                    : prev,
-                )
-              }}
-            />
-            是否共一
-          </label>
-          <label>
-            一作排名
-            <input
-              value={form.firstAuthorRank}
-              onChange={(e) => set('firstAuthorRank', e.target.value)}
-              placeholder="独一填 1/1，两人共一填 1/2"
-            />
-          </label>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={form.isCorresponding}
-              onChange={(e) => set('isCorresponding', e.target.checked)}
-            />
-            是否通讯作者
-          </label>
-          <label>
-            通讯作者
-            <input
-              value={form.correspondingAuthor}
-              onChange={(e) => set('correspondingAuthor', e.target.value)}
-              placeholder="一般为最后一位作者"
-            />
-          </label>
-          <label>
-            本人排名
-            <input
-              type="number"
-              min={1}
-              value={form.rank ?? ''}
-              onChange={(e) => set('rank', e.target.value === '' ? null : Number(e.target.value))}
-            />
-          </label>
-          <label>
-            作者总数
-            <input
-              type="number"
-              min={1}
-              value={form.authorTotal ?? ''}
-              onChange={(e) =>
-                set('authorTotal', e.target.value === '' ? null : Number(e.target.value))
-              }
-            />
-          </label>
-          <label>
-            引用次数
-            <input value={form.citations} onChange={(e) => set('citations', e.target.value)} />
-          </label>
-          <label className="full">
-            本人主要贡献
-            <textarea
-              rows={3}
-              value={form.myContribution}
-              onChange={(e) => set('myContribution', e.target.value)}
-            />
-          </label>
-          <label className="full">
-            Pubmed
-            <input value={form.pubmed} onChange={(e) => set('pubmed', e.target.value)} />
-          </label>
-          <label className="full">
-            在线链接
-            <input
-              value={form.online}
-              onChange={(e) => set('online', e.target.value)}
-              placeholder="https://doi.org/..."
-            />
-          </label>
-          <label className="full">
-            全文 PDF 路径
-            <input
-              value={form.pdfFull}
-              onChange={(e) => set('pdfFull', e.target.value)}
-              placeholder="paper/作者_年_杂志_标题__full.pdf"
-            />
-          </label>
-          <label className="full">
-            首页 PDF 路径
-            <input value={form.pdfFirst} onChange={(e) => set('pdfFirst', e.target.value)} />
-          </label>
-          <div className="full row-actions">
-            <button type="button" className="btn secondary" onClick={fillPdfNames}>
-              按规则生成 PDF 文件名
-            </button>
-            <button type="button" className="btn secondary" onClick={regenRis}>
-              重新生成 RIS
-            </button>
+        <form className="edit-form" onSubmit={submit}>
+          <div className="form-grid edit-form-body">
+            <label>
+              发表年月（A-B）
+              <input value={form.date} onChange={(e) => set('date', e.target.value)} placeholder="2023-11" />
+            </label>
+            <label>
+              发表年份
+              <input value={form.year} onChange={(e) => set('year', e.target.value)} placeholder="2023" />
+            </label>
+            <label className="full">
+              论文题目
+              <input value={form.title} onChange={(e) => set('title', e.target.value)} required />
+            </label>
+            <label>
+              刊物名称
+              <input value={form.journal} onChange={(e) => set('journal', e.target.value)} />
+            </label>
+            <label>
+              卷
+              <input value={form.volume} onChange={(e) => set('volume', e.target.value)} placeholder="42" />
+            </label>
+            <label>
+              期
+              <input value={form.issue} onChange={(e) => set('issue', e.target.value)} placeholder="2" />
+            </label>
+            <label>
+              页码
+              <input value={form.pages} onChange={(e) => set('pages', e.target.value)} placeholder="352-361" />
+            </label>
+            <label>
+              当年影响因子
+              <input
+                value={form.impactFactor}
+                onChange={(e) => set('impactFactor', e.target.value)}
+                placeholder="中文刊可留空"
+              />
+            </label>
+            <label>
+              中科院分区
+              <input value={form.cas} onChange={(e) => set('cas', e.target.value)} placeholder="如 医学3区" />
+            </label>
+            <label>
+              收录情况
+              <input value={form.indexing} onChange={(e) => set('indexing', e.target.value)} placeholder="SCI收录" />
+            </label>
+            <label>
+              第一作者
+              <input value={form.firstAuthor} onChange={(e) => set('firstAuthor', e.target.value)} />
+            </label>
+            <label className="full">
+              全部作者
+              <textarea
+                rows={2}
+                value={form.authors}
+                onChange={(e) => set('authors', e.target.value)}
+              />
+            </label>
+            <label className="check-label">
+              <input
+                type="checkbox"
+                checked={form.isFirstAuthor}
+                onChange={(e) => {
+                  const checked = e.target.checked
+                  setForm((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          isFirstAuthor: checked,
+                          firstAuthorRank: checked
+                            ? prev.firstAuthorRank || (prev.coFirst ? '1/2' : '1/1')
+                            : '',
+                        }
+                      : prev,
+                  )
+                }}
+              />
+              是否第一作者
+            </label>
+            <label className="check-label">
+              <input
+                type="checkbox"
+                checked={form.coFirst}
+                onChange={(e) => {
+                  const checked = e.target.checked
+                  setForm((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          coFirst: checked,
+                          isFirstAuthor: checked ? true : prev.isFirstAuthor,
+                          firstAuthorRank: checked ? prev.firstAuthorRank || '1/2' : prev.isFirstAuthor ? '1/1' : '',
+                        }
+                      : prev,
+                  )
+                }}
+              />
+              是否共一
+            </label>
+            <label>
+              一作排名
+              <input
+                value={form.firstAuthorRank}
+                onChange={(e) => set('firstAuthorRank', e.target.value)}
+                placeholder="独一填 1/1，两人共一填 1/2"
+              />
+            </label>
+            <label className="check-label">
+              <input
+                type="checkbox"
+                checked={form.isCorresponding}
+                onChange={(e) => set('isCorresponding', e.target.checked)}
+              />
+              是否通讯作者
+            </label>
+            <label>
+              通讯作者
+              <input
+                value={form.correspondingAuthor}
+                onChange={(e) => set('correspondingAuthor', e.target.value)}
+                placeholder="一般为最后一位作者"
+              />
+            </label>
+            <label>
+              本人排名
+              <input
+                type="number"
+                min={1}
+                value={form.rank ?? ''}
+                onChange={(e) => set('rank', e.target.value === '' ? null : Number(e.target.value))}
+              />
+            </label>
+            <label>
+              作者总数
+              <input
+                type="number"
+                min={1}
+                value={form.authorTotal ?? ''}
+                onChange={(e) =>
+                  set('authorTotal', e.target.value === '' ? null : Number(e.target.value))
+                }
+              />
+            </label>
+            <label>
+              引用次数
+              <input value={form.citations} onChange={(e) => set('citations', e.target.value)} />
+            </label>
+            <label className="full">
+              本人主要贡献
+              <textarea
+                rows={3}
+                value={form.myContribution}
+                onChange={(e) => set('myContribution', e.target.value)}
+              />
+            </label>
+            <label className="full">
+              Pubmed
+              <input value={form.pubmed} onChange={(e) => set('pubmed', e.target.value)} />
+            </label>
+            <label className="full">
+              在线链接
+              <input
+                value={form.online}
+                onChange={(e) => set('online', e.target.value)}
+                placeholder="https://doi.org/..."
+              />
+            </label>
+            <label className="full">
+              全文 PDF 路径
+              <input
+                value={form.pdfFull}
+                onChange={(e) => set('pdfFull', e.target.value)}
+                placeholder="paper/作者_年_杂志_标题__full.pdf"
+              />
+            </label>
+            <label className="full">
+              首页 PDF 路径
+              <input value={form.pdfFirst} onChange={(e) => set('pdfFirst', e.target.value)} />
+            </label>
+            <div className="full row-actions">
+              <button type="button" className="btn secondary" onClick={fillPdfNames}>
+                按规则生成 PDF 文件名
+              </button>
+              <button type="button" className="btn secondary" onClick={regenRis}>
+                重新生成 RIS
+              </button>
+            </div>
+            <label className="full">
+              RIS（Zotero）
+              <textarea rows={8} value={form.ris} onChange={(e) => set('ris', e.target.value)} />
+            </label>
           </div>
-          <label className="full">
-            RIS（Zotero）
-            <textarea rows={8} value={form.ris} onChange={(e) => set('ris', e.target.value)} />
-          </label>
-          <div className="full row-actions end">
-            <button type="button" className="btn ghost" onClick={onClose}>
+          <div className="edit-form-footer">
+            <button type="button" className="btn ghost footer-cancel" onClick={onClose}>
               取消
             </button>
             <button
               type="submit"
-              className="btn primary"
+              className="btn primary footer-save"
               disabled={!dirty}
               title={dirty ? '保存修改' : '未修改，无需保存'}
             >
