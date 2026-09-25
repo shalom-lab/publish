@@ -123,7 +123,9 @@ public/paper/{basename}__first.pdf
 ## 隐私与 BYOK
 
 - JSON 只放在 `data/`，**不**进 `public/`，避免随 Pages 裸奔。  
-- Token：`localStorage['gh-token-publish']`；设置页可改 owner/repo/分支并「清除 Token」。  
+- Token 保存在 `localStorage['gh-token-publish']`，也可由扩展/脚本预先注入；需 Contents 读写权限。设置页可改 owner/repo/分支；「清除 Token」会退出并清空页面上的论文，需重新粘贴才能查看。  
+- **请勿截图或分享含 Token 的界面。**  
+- 表格列显隐与顺序保存在 `localStorage['publish-column-prefs']`。  
 - 仓库若为 public，他人仍可能通过 GitHub 网页看到 `data/publications.json`。
 
 ```js
@@ -136,6 +138,8 @@ location.reload()
 | Owner/Repo | 默认 `shalom-lab/publish` |
 | 数据路径 | `data/publications.json` |
 | 权限 | Contents: Read and write |
+| Token 键 | `gh-token-publish` |
+| 列偏好键 | `publish-column-prefs` |
 
 ## 本地开发 / 部署
 

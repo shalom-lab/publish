@@ -1,5 +1,5 @@
 import type { GithubSettings } from '../types'
-import { saveSettings, TOKEN_KEY, writeToken } from '../lib/github'
+import { saveSettings, writeToken } from '../lib/github'
 
 interface Props {
   open: boolean
@@ -40,10 +40,6 @@ export function SettingsModal({ open, settings, onChange, onClose, onSaved, onCl
             关闭
           </button>
         </header>
-        <p className="hint">
-          Token 保存在 <code>localStorage[{TOKEN_KEY}]</code>。也可由扩展/脚本预先注入该键。需 Contents 读写权限。
-          清除 Token 即退出：页面上的论文会被清空，需重新粘贴 Token 才能查看。
-        </p>
         <div className="form-grid">
           <label>
             Owner
@@ -96,7 +92,6 @@ export function SettingsModal({ open, settings, onChange, onClose, onSaved, onCl
             保存
           </button>
         </div>
-        <p className="hint warn">请勿截图或分享含 Token 的界面。</p>
       </div>
     </div>
   )

@@ -5,6 +5,7 @@ interface Props {
   columns: ColumnDef[]
   visible: Set<PublicationKey>
   onToggleColumn: (key: PublicationKey) => void
+  onReorderColumns: (from: number, to: number) => void
   onAdd: () => void
   onSaveRemote: () => void
   onExportExcel: () => void
@@ -24,6 +25,7 @@ export function Toolbar({
   columns,
   visible,
   onToggleColumn,
+  onReorderColumns,
   onAdd,
   onSaveRemote,
   onExportExcel,
@@ -87,7 +89,12 @@ export function Toolbar({
       </div>
       <div className="toolbar-group toolbar-end">
         <span className="select-count">{hasSelection ? `已选 ${selectedCount} / ${totalCount}` : `已选 0 / ${totalCount}`}</span>
-        <ColumnToggle columns={columns} visible={visible} onToggle={onToggleColumn} />
+        <ColumnToggle
+          columns={columns}
+          visible={visible}
+          onToggle={onToggleColumn}
+          onReorder={onReorderColumns}
+        />
       </div>
     </div>
   )

@@ -9,7 +9,11 @@ import { SettingsModal } from './components/SettingsModal'
 import { ToastHost, toast } from './components/Toast'
 import { Toolbar } from './components/Toolbar'
 import { TopBar } from './components/TopBar'
-import { COLUMNS } from './lib/columns'
+import {
+  columnsInOrder,
+  loadColumnPrefs,
+  saveColumnPrefs,
+} from './lib/columnPrefs'
 import { downloadAllRis, downloadPdfZip, exportExcel, publicationsToCsv, publicationsToRis } from './lib/export'
 import { copyText } from './lib/copy'
 import {
@@ -55,10 +59,6 @@ function normalizePublication(raw: LegacyPublication): Publication {
   return syncDerivedFields(merged)
 }
 
-function defaultVisible(): Set<PublicationKey> {
-  return new Set(COLUMNS.filter((c) => c.defaultVisible !== false).map((c) => c.key))
-}
-
 function comparePubs(a: Publication, b: Publication, key: PublicationKey, dir: SortDir): number {
   const mul = dir === 'asc' ? 1 : -1
   if (key === 'date' || key === 'year') {
@@ -92,7 +92,11 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [editing, setEditing] = useState<Publication | null>(null)
   const [editOpen, setEditOpen] = useState(false)
-  const [visible, setVisible] = useState<Set<PublicationKey>>(defaultVisible)
+  const [columnOrder, setColumnOrder] = useState<PublicationKey[]>(() => loadColumnPrefs().order)
+  const [visible, setVisible] = useState<Set<PublicationKey>>(() => {
+    return new Set(loadColumnPrefs().visible)
+  })
+  const orderedColumns = useMemo(() => columnsInOrder(columnOrder), [columnOrder])
   const [saving, setSaving] = useState(false)
   const [fileSha, setFileSha] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
@@ -175,11 +179,27 @@ export default function App() {
 
   const canSave = Boolean(settings.owner && settings.repo && settings.token && unlocked)
 
+  const persistColumnPrefs = useCallback((order: PublicationKey[], vis: Set<PublicationKey>) => {
+    saveColumnPrefs({ order, visible: [...vis] })
+  }, [])
+
   const toggleColumn = (key: PublicationKey) => {
     setVisible((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
+      persistColumnPrefs(columnOrder, next)
+      return next
+    })
+  }
+
+  const reorderColumns = (from: number, to: number) => {
+    setColumnOrder((prev) => {
+      if (from < 0 || to < 0 || from >= prev.length || to >= prev.length) return prev
+      const next = [...prev]
+      const [item] = next.splice(from, 1)
+      next.splice(to, 0, item)
+      persistColumnPrefs(next, visible)
       return next
     })
   }
@@ -303,9 +323,10 @@ export default function App() {
       </header>
 
       <Toolbar
-        columns={COLUMNS}
+        columns={orderedColumns}
         visible={visible}
         onToggleColumn={toggleColumn}
+        onReorderColumns={reorderColumns}
         onAdd={() => {
           setEditing(createEmptyPublication())
           setEditOpen(true)
@@ -369,7 +390,12 @@ export default function App() {
       </div>
 
       <div className="mobile-only">
-        <ColumnToggle columns={COLUMNS} visible={visible} onToggle={toggleColumn} />
+        <ColumnToggle
+          columns={orderedColumns}
+          visible={visible}
+          onToggle={toggleColumn}
+          onReorder={reorderColumns}
+        />
       </div>
 
       {loading ? (
@@ -377,7 +403,7 @@ export default function App() {
       ) : (
         <PubTable
           publications={sortedPublications}
-          columns={COLUMNS}
+          columns={orderedColumns}
           visible={visible}
           sortKey={sortKey}
           sortDir={sortDir}
