@@ -91,8 +91,8 @@ button, input, textarea { font: inherit; }
   background: var(--primary-soft);
   border: 1px solid #cfe3d7;
   border-radius: 8px;
-  padding: 6px 10px;
-  min-width: 56px;
+  padding: 5px 8px;
+  min-width: 48px;
   text-align: center;
 }
 

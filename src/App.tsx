@@ -294,9 +294,10 @@ export default function App() {
 
   const stats = useMemo(() => {
     const total = publications.length
-    const first = publications.filter((p) => p.rank === 1).length
     const sci = publications.filter((p) => /SCI/i.test(p.indexing)).length
-    return { total, first, sci }
+    const first = publications.filter((p) => p.isFirstAuthor).length
+    const corresponding = publications.filter((p) => p.isCorresponding).length
+    return { total, sci, first, corresponding }
   }, [publications])
 
   if (!unlocked) {
@@ -341,12 +342,16 @@ export default function App() {
             <span>篇</span>
           </div>
           <div>
+            <strong>{stats.sci}</strong>
+            <span>SCI</span>
+          </div>
+          <div>
             <strong>{stats.first}</strong>
             <span>一作</span>
           </div>
           <div>
-            <strong>{stats.sci}</strong>
-            <span>SCI</span>
+            <strong>{stats.corresponding}</strong>
+            <span>通讯</span>
           </div>
           {dirty && <div className="dirty-badge">未同步</div>}
         </div>
