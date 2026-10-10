@@ -311,7 +311,7 @@ export function PubTable({
           >
             {text ? (
               <span className="chip chip-if" style={ifStyle}>
-                IF {text}
+                {text}
               </span>
             ) : (
               <span className="muted">—</span>
