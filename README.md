@@ -48,7 +48,7 @@
 ### 派生与一致性（写完后自检）
 
 1. `authorTotal` = `authors` 拆分后的人数。  
-2. `rank` = 本人在 `authors` 中的序号（用 `data/owner.local.json` 的 `names` 匹配，勿把真名写进公开文档）。  
+2. `rank` = 本人在 `authors` 中的序号（用 `owner.local.json` 的 `names`，或从 `isFirstAuthor: true` 已有条目归纳的署名匹配；勿把真名写进公开文档）。  
 3. `isFirstAuthor` ⇔ `rank === 1` 或本人在共一名单内。  
 4. `firstAuthorRank`：一作且非共一 → `1/1`；共一 → `1/N`（N 为共一人数）；非一作 → `""`。  
 5. `correspondingAuthor`：默认 = `authors` **最后一人**；不要写分号多人。  
