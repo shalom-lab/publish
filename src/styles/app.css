@@ -632,11 +632,15 @@ td.select-col {
   white-space: nowrap;
 }
 .chip-journal { background: #e8eef8; color: #2f4d7a; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
-/* 默认杏桃；有数值时由 impactFactorChipStyle 覆盖为叶月红渐变 */
+/* 默认灰绿底；有数值时由 impactFactorChipStyle 覆盖热力色阶 */
 .chip-if {
-  background: #fff0e6;
-  color: var(--accent);
-  border: 1px solid #e8b48a;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.35;
+  background: #f0f2f3;
+  color: #787f84;
+  border: 1px solid #c4cad0;
   box-sizing: border-box;
 }
 .chip-cas { background: #e8f4ec; color: var(--primary); }
