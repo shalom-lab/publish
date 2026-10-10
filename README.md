@@ -9,7 +9,7 @@
 
 ## 数据规范（新增 / 改稿时必须遵守）
 
-> **给 AI**：完整入库流程见 [`AGENTS.md`](AGENTS.md)。用户若只丢链接或 PDF，按该流程生成**完整一条** `Publication` 写入 `data/publications.json`。匹配「本人」时只读本地 `data/owner.local.json`（模板：`data/owner.local.example.json`），**不要**把真实姓名写进 README / AGENTS / 规则。不要发明未在本节出现的字段名。
+> **给 AI**：完整入库流程见 [`AGENTS.md`](AGENTS.md)。用户若只丢链接或 PDF，按该流程生成**完整一条** `Publication` 写入 `data/publications.json`。匹配「本人」时优先读本地 `data/owner.local.json`；也可用已有 `isFirstAuthor: true` 条目的 `firstAuthor` 反推中英文名。**不要**把真实姓名写进 README / AGENTS / 规则。不要发明未在本节出现的字段名。
 
 类型定义见 [`src/types.ts`](src/types.ts)；表头中文见 [`src/lib/columns.ts`](src/lib/columns.ts)。
 
@@ -30,7 +30,7 @@
 | `indexing` | 收录 | string | 如 `SCI收录` 或 `CSCD核心;北大核心;统计源` |
 | `firstAuthor` | 第一作者 | string | 论文署名第一人（英文姓名保持原文拼写） |
 | `authors` | 全部作者 | string | **按署名顺序**完整列表。英文：`, ` 分隔；中文：可用 `，` |
-| `isFirstAuthor` | 是否第一作者 | boolean | 本人是否为一作（含共一）。「本人」署名变体见本地 `data/owner.local.json`（不入库） |
+| `isFirstAuthor` | 是否第一作者 | boolean | 本人是否为一作（含共一）。「本人」署名：本地 `owner.local.json`，或从本字段为 true 的已有条目的 `firstAuthor` 反推 |
 | `coFirst` | 是否共一 | boolean | 本人是否为共同第一作者 |
 | `firstAuthorRank` | 一作排名 | string | 独一作 `1/1`；两人共一且本人为一作之一 `1/2`；本人非一作则 `""` |
 | `isCorresponding` | 是否通讯作者 | boolean | 本人是否为通讯作者 |
