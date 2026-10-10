@@ -8,6 +8,7 @@ import {
   splitVisibleColumns,
   type ColumnWidths,
 } from '../lib/columnPrefs'
+import { impactFactorChipStyle } from '../lib/ifChip'
 import { assetUrl } from '../lib/pdfName'
 import { rankDisplay } from '../lib/publication'
 import { toast } from './Toast'
@@ -299,6 +300,7 @@ export function PubTable({
     }
 
     if (c.key === 'impactFactor') {
+      const ifStyle = text ? impactFactorChipStyle(text) : undefined
       return (
         <td key={c.key} className={className || undefined} style={style}>
           <button
@@ -307,7 +309,13 @@ export function PubTable({
             title={text || '中文刊可不填 IF'}
             onClick={(e) => onCopy(text, e)}
           >
-            {text ? <span className="chip chip-if">IF {text}</span> : <span className="muted">—</span>}
+            {text ? (
+              <span className="chip chip-if" style={ifStyle}>
+                IF {text}
+              </span>
+            ) : (
+              <span className="muted">—</span>
+            )}
           </button>
         </td>
       )
