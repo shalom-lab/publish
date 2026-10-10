@@ -11,7 +11,7 @@ function splitAuthors(authors: string): string[] {
     .filter(Boolean)
 }
 
-/** Convert "Shaolong Ren" -> "Ren, Shaolong"; keep Chinese as-is. */
+/** Convert "Given Family" -> "Family, Given"; keep Chinese as-is. */
 function toRisAuthor(name: string): string {
   if (/[\u4e00-\u9fff]/.test(name)) return name
   const parts = name.trim().split(/\s+/)

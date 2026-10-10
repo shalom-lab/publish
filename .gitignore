@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# 本人姓名等私密标识（勿提交；见 data/owner.local.example.json）
+data/owner.local.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

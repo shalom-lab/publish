@@ -9,7 +9,7 @@
 
 ## 数据规范（新增 / 改稿时必须遵守）
 
-> **给 AI**：用户若只丢一个文章链接（Pubmed / DOI / 期刊页），请先抓取元数据，再按本节生成**完整一条** `Publication` JSON，写入 `data/publications.json`；若有 PDF，按命名放入 `public/paper/`，并用 `npm run pdf:first` 从全文截取首页。不要发明未在本节出现的字段名。
+> **给 AI**：完整入库流程见 [`AGENTS.md`](AGENTS.md)。用户若只丢链接或 PDF，按该流程生成**完整一条** `Publication` 写入 `data/publications.json`。匹配「本人」时只读本地 `data/owner.local.json`（模板：`data/owner.local.example.json`），**不要**把真实姓名写进 README / AGENTS / 规则。不要发明未在本节出现的字段名。
 
 类型定义见 [`src/types.ts`](src/types.ts)；表头中文见 [`src/lib/columns.ts`](src/lib/columns.ts)。
 
@@ -30,7 +30,7 @@
 | `indexing` | 收录 | string | 如 `SCI收录` 或 `CSCD核心;北大核心;统计源` |
 | `firstAuthor` | 第一作者 | string | 论文署名第一人（英文姓名保持原文拼写） |
 | `authors` | 全部作者 | string | **按署名顺序**完整列表。英文：`, ` 分隔；中文：可用 `，` |
-| `isFirstAuthor` | 是否第一作者 | boolean | 本人（Shaolong Ren / 任少龙）是否为一作（含共一） |
+| `isFirstAuthor` | 是否第一作者 | boolean | 本人是否为一作（含共一）。「本人」署名变体见本地 `data/owner.local.json`（不入库） |
 | `coFirst` | 是否共一 | boolean | 本人是否为共同第一作者 |
 | `firstAuthorRank` | 一作排名 | string | 独一作 `1/1`；两人共一且本人为一作之一 `1/2`；本人非一作则 `""` |
 | `isCorresponding` | 是否通讯作者 | boolean | 本人是否为通讯作者 |
@@ -48,7 +48,7 @@
 ### 派生与一致性（写完后自检）
 
 1. `authorTotal` = `authors` 拆分后的人数。  
-2. `rank` = 本人在 `authors` 中的序号（英文名 `Shaolong Ren`，中文名 `任少龙`）。  
+2. `rank` = 本人在 `authors` 中的序号（用 `data/owner.local.json` 的 `names` 匹配，勿把真名写进公开文档）。  
 3. `isFirstAuthor` ⇔ `rank === 1` 或本人在共一名单内。  
 4. `firstAuthorRank`：一作且非共一 → `1/1`；共一 → `1/N`（N 为共一人数）；非一作 → `""`。  
 5. `correspondingAuthor`：默认 = `authors` **最后一人**；不要写分号多人。  
@@ -99,21 +99,21 @@ public/paper/{basename}__first.pdf
   "impactFactor": "3.4",
   "cas": "医学3区",
   "indexing": "SCI收录",
-  "firstAuthor": "Shaolong Ren",
-  "authors": "Shaolong Ren, Han Zhang, Shuyu Deng, Harish Nair, You Li",
+  "firstAuthor": "Owner Name",
+  "authors": "Owner Name, Coauthor A, Coauthor B",
   "isFirstAuthor": true,
   "coFirst": false,
   "firstAuthorRank": "1/1",
   "isCorresponding": false,
-  "correspondingAuthor": "You Li",
+  "correspondingAuthor": "Coauthor B",
   "rank": 1,
-  "authorTotal": 5,
+  "authorTotal": 3,
   "myContribution": "",
   "citations": "",
   "pubmed": "",
-  "online": "https://doi.org/10.1136/bmjresp-2025-003850",
-  "pdfFull": "paper/Shaolong_Ren_2026_BMJ_Open_Respiratory_Understanding_real_world_effectiveness_o__full.pdf",
-  "pdfFirst": "paper/Shaolong_Ren_2026_BMJ_Open_Respiratory_Understanding_real_world_effectiveness_o__first.pdf",
+  "online": "https://doi.org/10.xxxx/example",
+  "pdfFull": "paper/Owner_Name_2026_Example_Journal_Example_title_slug__full.pdf",
+  "pdfFirst": "paper/Owner_Name_2026_Example_Journal_Example_title_slug__first.pdf",
   "ris": "…"
 }
 ```

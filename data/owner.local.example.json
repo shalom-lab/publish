@@ -1,0 +1,4 @@
+{
+  "names": ["Your English Name", "你的中文名"],
+  "notes": "复制本文件为 owner.local.json 并填入本人署名变体。该文件已被 gitignore，不会进公开仓库。入库时用这些字符串在 authors 里匹配 rank / isFirstAuthor 等。"
+}
