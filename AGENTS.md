@@ -2,7 +2,7 @@
 
 本仓库用于整理个人已发表论文。AI 接到文献链接、DOI、Pubmed 或 PDF 时，按本文件走完入库；字段细则见 [`README.md`](README.md)「数据规范」。
 
-**隐私**：公开文档（本文件、README、规则）**禁止**写入本人真实姓名。匹配「本人」时只读本地 [`data/owner.local.json`](data/owner.local.json)（已 gitignore；模板见 [`data/owner.local.example.json`](data/owner.local.example.json)）。若该文件不存在，先请用户按 example 创建，**不要**把姓名写回本文件或提交进 git。
+**隐私**：公开文档（本文件、README、规则）**禁止**写入本人真实姓名。匹配「本人」时优先读本地 [`data/owner.local.json`](data/owner.local.json)（已 gitignore；模板见 [`data/owner.local.example.json`](data/owner.local.example.json)）。若无该文件，可从 [`data/publications.json`](data/publications.json) **已有**条目反推：筛 `isFirstAuthor === true` 的记录，收集其 `firstAuthor`（及 `authors` 里对应位次的署名），即可得到本人中英文等署名变体；勿把推得的姓名写回本文件或提交进 git。
 
 ---
 
@@ -32,7 +32,7 @@
 |----|------|
 | 站点 | GitHub Pages（owner/repo 见设置或 `src/lib/github.ts` 默认值） |
 | 数据 | `data/publications.json`（数组） |
-| 本人标识 | **仅** `data/owner.local.json` 的 `names` 数组（中英文等署名变体） |
+| 本人标识 | 优先 `data/owner.local.json` 的 `names`；否则从 `publications.json` 里 `isFirstAuthor: true` 的 `firstAuthor` / 作者位次反推中英文名 |
 | 类型 | `src/types.ts` |
 | PDF | `public/paper/{basename}__full.pdf` / `__first.pdf` |
 | 命名 | `src/lib/pdfName.ts`；对照可用 `npx tsx scripts/list-pdf-names.mts` |
@@ -49,8 +49,8 @@
 ## 3. 工作要求
 
 - 严格遵守 README 数据规范与派生自检（`rank` / `authorTotal` / 一作共一 / 通讯作者取作者列表末位等）
-- 计算「本人」角色时：读取 `owner.local.json` 的 `names`，在 `authors` 中匹配（大小写与空格按原文）
-- **禁止**把 `names` 抄进 AGENTS.md、README、`.cursor/rules`、commit message 正文以外的公开说明
+- 计算「本人」角色时：用 `owner.local.json` 的 `names`，或从已有 `isFirstAuthor: true` 条目归纳出的署名变体，在 `authors` 中匹配（大小写与空格按原文）
+- **禁止**把推得的姓名抄进 AGENTS.md、README、`.cursor/rules` 等公开说明（书目 JSON 里原文署名除外）
 - `date` 用 `YYYY-MM`，优先 online 月，其次 print
 - `impactFactor` 填**发表当年** IF；中文刊可空。`cas` 如 `医学3区`；中文刊可空
 - `correspondingAuthor` 一般只填一人（末位），不要写成 `A; B`
@@ -67,9 +67,11 @@
 
 从链接 / DOI / PDF 文件名或全文首页提取题目与 DOI。在 `data/publications.json` 查是否已有同 DOI / 同题；已存在则只补 PDF 或修正字段，不重复追加。
 
-### Step 2 — 读取本人标识
+### Step 2 — 确定本人署名变体
 
-若存在 `data/owner.local.json`，读取 `names`。若不存在：复制 example 的说明请用户补全本地文件后继续，不要把姓名写入仓库文档。
+1. 若存在 `data/owner.local.json`，读取 `names`。
+2. 否则（或作为校验）：打开 `data/publications.json`，取所有 `isFirstAuthor === true` 的条目，汇总其 `firstAuthor`（中文刊多为中文名，英文刊多为英文名）；亦可看 `rank` 对应的 `authors` 位次。去重后即本人中英文等写法。
+3. 仍无法判断时再请用户补本地 `owner.local.json`；**不要**把姓名写入仓库文档。
 
 ### Step 3 — 抓取元数据
 
